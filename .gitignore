@@ -39,3 +39,11 @@
 
 # debug information files
 *.dwo
+
+# visual studio code task fles
+tasks.json
+launch.json
+
+# Optic files
+*.opt
+.gitignore
