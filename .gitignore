@@ -33,6 +33,8 @@
 *.lib
 
 # Executables
+/bin/
+/build/
 *.exe
 *.out
 *.app
@@ -41,7 +43,7 @@
 # debug information files
 *.dwo
 
-# visual studio code task fles
+# Visual Studio Code task fles
 tasks.json
 launch.json
 
