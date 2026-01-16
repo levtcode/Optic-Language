@@ -35,6 +35,7 @@
 # Executables
 /bin/
 /build/
+/out/
 *.exe
 *.out
 *.app
@@ -42,10 +43,15 @@
 
 # debug information files
 *.dwo
+/.cache/
 
-# Visual Studio Code task fles
-tasks.json
-launch.json
+# testing & debugging
+/tests/
+test.cpp
+
+# Visual Studio & VS Code task files
+/.vscode/
+/.vs/
 
 # Optic files
 *.opt

@@ -1,0 +1,111 @@
+// ===== Types =====
+X(Int)
+X(Float)
+X(Bool)
+X(String)
+X(Char)
+X(Identifier)
+
+// ===== Combined types =====
+X(Const)
+X(Pointer)
+X(Array)
+X(Tuple)
+X(Dict)
+
+// ===== Symbols =====
+X(LeftParen)
+X(RightParen)
+X(LeftBrace)
+X(RightBrace)
+X(LeftBracket)
+X(RightBracket)
+X(Colon)
+X(Semicolon)
+X(Comma)
+X(Point)
+X(TernaryOp)
+X(Arrow)
+
+// ===== Simple operators =====
+X(Equal)
+X(Plus)
+X(Minus)
+X(Star)
+X(Slash)
+X(Mod)
+X(Pow)
+
+// ===== Bitwise operators =====
+X(BitAnd)
+X(BitOr)
+X(BitNot)
+X(BitXor)
+X(LeftShift)
+X(RightShift)
+
+// ===== Assignment operators =====
+X(Increment)
+X(Decrement)
+X(PlusAssign)
+X(MinusAssign)
+X(MulAssign)
+X(DivAssign)
+X(ModAssign)
+X(AndAssign)
+X(OrAssign)
+X(LShiftAssign)
+X(RShiftAssign)
+
+// ===== Logical operators =====
+X(And_C)
+X(Or_C)
+X(Not_C)
+X(And)
+X(Or)
+X(Not)
+
+// ===== Comparison operators =====
+X(EqualEqual)
+X(NotEqual)
+X(Less)
+X(LessEqual)
+X(Greater)
+X(GreaterEqual)
+
+// ===== Preprocessor / directives =====
+X(Import)
+X(Directive)
+X(Macro)
+
+// ===== Keywords =====
+X(Asm)
+X(New)
+X(Delete)
+X(Generic)
+X(If)
+X(Elif)
+X(Else)
+X(Func)
+X(Null)
+X(Return)
+X(ForLoop)
+X(WhileLoop)
+X(Break)
+X(Continue)
+X(Switch)
+X(Case)
+X(Try)
+X(Catch)
+X(Throw)
+X(Enum)
+X(Struct)
+X(Class)
+X(Lambda)
+X(Template)
+
+// ===== Special =====
+X(LiteralTrue)
+X(LiteralFalse)
+X(FString)
+X(EndOfFile)
