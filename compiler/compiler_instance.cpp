@@ -2,7 +2,12 @@
 
 #include "compiler_instance.hpp"
 #include "args.hpp"
-// #include "preprocessor/preprocessor.hpp"
+#include "diagnostic_engine.hpp"
+#include "preprocessor/preprocessor.hpp"
+
+#include <cstddef>
+#include <cstdlib>
+#include <float.h>
 
 // ========== Definitions for class methods ==========
 
@@ -24,18 +29,11 @@ bool File::seek(const size_t &__pos) noexcept {
 
 bool File::open(const char *fname, const char* mode) {
     fp = fopen(fname, mode);
-    
-    if (!fp) {
-        return false;
-    }
-
-    return true;
+    return fp != nullptr;
 }
 
 void File::close() noexcept {
-    if (!fp) {
-        return;
-    }
+    if (!fp) return;
 
     fclose(fp);
     pos = 0;
@@ -44,9 +42,7 @@ void File::close() noexcept {
 }
 
 size_t File::read() {
-    if (!fp) {
-        return 0;
-    }
+    if (!fp) return 0;
 
     fseek(fp, 0, SEEK_END);
     size_t size = ftell(fp);
@@ -61,7 +57,6 @@ File& File::operator=(const char* fname) {
 
     if (!p) {
         fclose(p);
-        delete fname;
         return *this;
     }
 
@@ -73,8 +68,6 @@ File& File::operator=(const std::pair<const char *, const char *> &f) {
     FILE* p = fopen(f.first, f.second);
 
     if (!p) {
-        delete[] f.first;
-        delete[] f.second;
         fclose(p);
         return *this;
     }
@@ -83,13 +76,13 @@ File& File::operator=(const std::pair<const char *, const char *> &f) {
     return *this;
 }
 
-File& File::operator=(const File& f) {
+File& File::operator=(const File f) {
     if (!f.fp) return *this;
 
-    fp = f.fp;
-    buffer = f.buffer;
-    pos = f.pos;
-    reached_eof = f.reached_eof;
+    this->fp = f.fp;
+    this->pos = f.pos;
+    this->reached_eof = f.reached_eof;
+    this->buffer = f.buffer;
     return *this;
 }
 
@@ -104,5 +97,34 @@ int CompilerInstance::run(int argc, char *argv[]) {
 }
 
 void CompilerInstance::preprocess() {
-    // TODO
+    DependencyGraph graph;
+    
+    for (size_t i = 0; i < compiler_args.files.size(); i++) {
+        const char *fname = compiler_args.files[i].c_str();
+        File file(fname, "r");
+
+        if (!file.is_open()) {
+            std::string msg = "Error: Cant open file '";
+            msg += fname;
+            msg += "' file does not exists.\n";
+
+            diagnostic_engine.report(
+                SourceLocation(SourceKind::Stdin, fname, "", 0, 0),
+                msg,
+                DiagnosticLevel::Error
+            );
+            continue;
+        }
+
+        Preprocessor preprocessor(Module(fname), graph);
+        preprocessor.analyze(file.data());
+    }
+
+#ifdef OPTIC_DEBUG
+    graph.print_nodes();
+#endif
+
+    if (graph.has_cycles()) {
+        // TODO
+    }
 }

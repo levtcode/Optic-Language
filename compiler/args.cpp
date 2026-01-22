@@ -123,6 +123,7 @@ void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
             "Error: Not enough arguments provided in the command line\n",
             DiagnosticLevel::FatalError
         );
+        // call_usage ...
         compiler_instance.diagnostic_engine.compiler_stop();
     }
 

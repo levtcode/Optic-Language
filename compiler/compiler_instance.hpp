@@ -37,13 +37,16 @@ class File {
 public:
     File() = default;
 
-    File(const char *fname, const char* mode) {
+    File(const char *fname, const char *mode) {
         open(fname, mode);
         read();
     }
 
+    File(const File&) = delete;
+    File& operator=(const File&) = delete;
+
     int get() noexcept;
-    inline void unget() noexcept { --pos; }
+    inline void unget() noexcept { if (pos > 0) --pos; }
 
     inline bool is_open() const noexcept { return fp != nullptr; }
     inline bool iseof() const noexcept { return reached_eof; }
@@ -57,9 +60,11 @@ public:
     inline size_t get_pos() const noexcept { return pos; }
     size_t read();
 
+    [[nodiscard]] inline std::string& data() { return buffer; }
+
     File& operator=(const char*);
     File& operator=(const std::pair<const char *, const char *>&);
-    File& operator=(const File&);
+    File& operator=(const File);
 };
 
 class CompilerInstance {

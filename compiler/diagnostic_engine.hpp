@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include <string_view>
 #include <string>
 #include <vector>
 
@@ -21,13 +20,13 @@ enum class SourceKind {
 
 struct SourceLocation {
     SourceKind source_kind = SourceKind::File;
-    std::string_view file;
-    std::string_view function_name;
+    std::string file;
+    std::string function_name;
     unsigned line = 1;
     unsigned column = 1;
 
     SourceLocation() = default;
-    SourceLocation(SourceKind src_kind, const std::string_view &f, const std::string_view &func_name, 
+    SourceLocation(SourceKind src_kind, const std::string &f, const std::string &func_name, 
         const unsigned ln, const unsigned col) :
         source_kind(src_kind), file(f), function_name(func_name), line(ln), column(col) {}
 };
@@ -62,8 +61,8 @@ class DiagnosticEngine {
     void print_info(const Diagnostic&, const SourceKind&);
 public:
     void report(const SourceLocation&, const std::string&, const DiagnosticLevel);
-    void show();
-    void show_all();
+    void show() noexcept;
+    void show_all() noexcept;
 
     [[noreturn]] void compiler_stop(bool=false) noexcept;
 

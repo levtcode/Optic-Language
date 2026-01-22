@@ -31,7 +31,7 @@ void DiagnosticEngine::print_info(const Diagnostic &diag, const SourceKind &src_
         "On function: {}, at line: {}, in column: {}\n" \
         "{}\n" \
         "In file: {}\n" \
-        "With a severity of: {} := {}\n\n",
+        "With a severity of: {}, whose level: {}\n\n",
         diag.loc.file, diag.loc.line, diag.loc.column,
         diag.msg, diag.loc.file, Diagnostic::severity_to_string(diag.level),
         (int) diag.level
@@ -47,7 +47,7 @@ void DiagnosticEngine::report(const SourceLocation &loc, const std::string &mess
     }
 }
 
-void DiagnosticEngine::show() {
+void DiagnosticEngine::show() noexcept {
     for (auto &diag : diagnostics) {
         if (diag.id == __actual_diag) {
             print_info(diag, diag.loc.source_kind);
@@ -57,7 +57,7 @@ void DiagnosticEngine::show() {
     __actual_diag++;
 }
 
-void DiagnosticEngine::show_all() {
+void DiagnosticEngine::show_all() noexcept {
     for (auto &diag : diagnostics) {
         print_info(diag, diag.loc.source_kind);
     }
