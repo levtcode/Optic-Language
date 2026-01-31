@@ -6,6 +6,7 @@
 #include <cctype>
 #include <iostream>
 #include <cstddef>
+#include <unordered_map>
 #include <string_view>
 
 std::vector<Macro> macros;
@@ -32,6 +33,25 @@ void DependencyGraph::print_nodes() {
 
 #endif
 
+bool dfs_recursive(const GraphNode &node, const std::map<std::string, GraphNode> &nodes, std::unordered_map<std::string, DependencyGraph::VisitState> &visit) {
+	if (visit.contains(node.module.module_name)) {
+		if (visit[node.module.module_name] == DependencyGraph::Visiting)
+			return true;
+		else if (visit[node.module.module_name] == DependencyGraph::Visited)
+			return false;
+	}
+
+	visit[node.module.module_name] = DependencyGraph::Visiting;
+
+	for (auto &dep : node.dependencies) {
+		auto dep_it = nodes.find(dep);
+		if (dfs_recursive(dep_it->second, nodes, visit)) return true;
+	}
+
+	visit[node.module.module_name] = DependencyGraph::Visited;
+	return false;
+}
+
 GraphNode& DependencyGraph::add_node(const std::string &module) {
 	auto it = nodes.try_emplace(module, module);
 	return it.first->second;
@@ -41,38 +61,18 @@ void DependencyGraph::add_dependency(const std::string &module, const std::strin
 	auto &node = add_node(module);
 	node.dependencies.push_back(dependency);
 	add_node(dependency);
+
+	if (dfs()) {
+		nodes.erase(node.module.module_name);
+	}
 }
 
-bool DependencyGraph::dfs(const GraphNode &node, std::unordered_map<std::string, VisitState> &visit) const noexcept {
-	auto it = visit.find(node.module.module_name);
-	
-	if (it != visit.end()) {
-		if (it->second == Visited)
-			return false;
-		if (it->second == Visiting)
-			return true;
-	}
-
-	visit[node.module.module_name] = Visiting;
-
-	for (auto &dep : node.dependencies) {
-		auto dep_it = nodes.find(dep);
-        if (dep_it != nodes.end()) {
-            if (dfs(dep_it->second, visit)) return true;
-        }
-	}
-
-	visit[node.module.module_name] = Visited;
-	return false;
-}
-
-bool DependencyGraph::has_cycles() const noexcept {
+bool DependencyGraph::dfs() const noexcept {
 	std::unordered_map<std::string, VisitState> visit;
-
+	
 	for (auto &[_, node] : nodes) {
-		if (dfs(node, visit)) {
-			return true;
-		}
+		if (!visit.contains(node.module.module_name))
+			if (dfs_recursive(node, nodes, visit)) return true;
 	}
 
 	return false;

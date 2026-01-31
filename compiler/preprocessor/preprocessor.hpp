@@ -6,11 +6,8 @@
 #include <cstddef>
 #include <filesystem>
 #include <map>
-#include <unordered_map>
 #include <string_view>
 #include <vector>
-
-constexpr const char *optic_extension = ".optic";
 
 struct Module {
     std::string module_name;
@@ -35,18 +32,16 @@ struct GraphNode {
 class DependencyGraph {
     std::map<std::string, GraphNode> nodes;
 
+    bool dfs() const noexcept;
+
+public:
     enum VisitState {
         Visited,
         Visiting
     };
 
-    bool dfs(const GraphNode&, std::unordered_map<std::string, VisitState>&) const noexcept;
-
-public:
     GraphNode& add_node(const std::string&);
     void add_dependency(const std::string&, const std::string&) noexcept;
-    void resolve_dependencies();
-    bool has_cycles() const noexcept;
 
 #ifdef OPTIC_DEBUG
     void print_nodes();
@@ -72,7 +67,7 @@ class Preprocessor {
 
 public:
     Preprocessor(Module mod, DependencyGraph &g) :
-        module(mod), graph(g) { loc.file = mod.module_name; }
+        module(mod), graph(g) { loc.file = mod.module_path; }
 
     void analyze(std::string_view);
 };

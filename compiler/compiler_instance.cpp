@@ -7,7 +7,7 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <float.h>
+#include <format>
 
 // ========== Definitions for class methods ==========
 
@@ -27,62 +27,57 @@ bool File::seek(const size_t &__pos) noexcept {
     return true;
 }
 
-bool File::open(const char *fname, const char* mode) {
-    fp = fopen(fname, mode);
-    return fp != nullptr;
+bool File::open(const char *fname, const char* mode) noexcept {
+    FilePtr p(fopen(fname, mode), fclose);
+    if (!p) return false;
+    reset();
+    fp = std::move(p);
+    return true;
 }
 
 void File::close() noexcept {
-    if (!fp) return;
+    if (fp) {
+        fclose(fp.release());
+    }
+    reset();
+}
 
-    fclose(fp);
-    pos = 0;
+void File::reset() noexcept {
     buffer = "";
-    reached_eof = false;
+    pos = 0;
+    reached_eof = 0;
 }
 
 size_t File::read() {
     if (!fp) return 0;
 
-    fseek(fp, 0, SEEK_END);
-    size_t size = ftell(fp);
-    rewind(fp);
+    fseek(fp.get(), 0, SEEK_END);
+    size_t size = ftell(fp.get());
+    rewind(fp.get());
 
     buffer.resize(size);
-    return fread(buffer.data(), 1, buffer.size(), fp);
+    return fread(buffer.data(), 1, buffer.size(), fp.get());
 }
 
 File& File::operator=(const char* fname) {
-    FILE* p = fopen(fname, "r");
-
-    if (!p) {
-        fclose(p);
-        return *this;
-    }
-
-    fp = p;
+    if (!open(fname, "r")) return *this;
     return *this;
 }
 
 File& File::operator=(const std::pair<const char *, const char *> &f) {
-    FILE* p = fopen(f.first, f.second);
-
-    if (!p) {
-        fclose(p);
-        return *this;
-    }
-
-    fp = p;
+    open(f.first, f.second);
     return *this;
 }
 
-File& File::operator=(const File f) {
-    if (!f.fp) return *this;
+File& File::operator=(File &&other) noexcept {
+    if (this != &other) {
+        close();
+        this->buffer = other.buffer;
+        this->pos = other.pos;
+        this->reached_eof = other.reached_eof;
+        this->fp = std::move(other.fp);
+    }
 
-    this->fp = f.fp;
-    this->pos = f.pos;
-    this->reached_eof = f.reached_eof;
-    this->buffer = f.buffer;
     return *this;
 }
 
@@ -104,13 +99,18 @@ void CompilerInstance::preprocess() {
         File file(fname, "r");
 
         if (!file.is_open()) {
-            std::string msg = "Error: Cant open file '";
-            msg += fname;
-            msg += "' file does not exists.\n";
-
             diagnostic_engine.report(
-                SourceLocation(SourceKind::Stdin, fname, "", 0, 0),
-                msg,
+                SourceLocation(SourceKind::Stdin, "", "", 0, 0),
+                std::format("Error: Cant open file '{}' file does not exists.\n", fname),
+                DiagnosticLevel::Error
+            );
+            continue;
+        }
+
+        if (!file.read()) {
+            diagnostic_engine.report(
+                SourceLocation(SourceKind::Stdin, "", "", 0, 0), 
+                std::format("Error: Failed to read file '{}', IO error.\n", fname),
                 DiagnosticLevel::Error
             );
             continue;
@@ -123,8 +123,4 @@ void CompilerInstance::preprocess() {
 #ifdef OPTIC_DEBUG
     graph.print_nodes();
 #endif
-
-    if (graph.has_cycles()) {
-        // TODO
-    }
 }
