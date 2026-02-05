@@ -6,33 +6,47 @@
 #include <cstddef>
 #include <filesystem>
 #include <map>
-#include <string_view>
 #include <vector>
+#include <unordered_map>
 
+/* */
 struct Module {
     std::string module_name;
     std::filesystem::path module_path;
 
+    Module() = default;
     Module(const std::string &fname) : module_path(fname) {
         module_name = module_path.filename().string();
         size_t ext = module_name.find_last_of('.');
-        
+
         if (ext != std::string::npos)
             module_name.erase(ext);
     }
 };
 
-struct GraphNode {
-    Module module;
-    std::vector<std::string> dependencies;
+/* */
+struct PreprocessedModule {
+    std::string module;
+    std::vector<uint8_t> buffer;
 
-    GraphNode(const std::string &n) : module(n) {}
+    PreprocessedModule() = default;
+    PreprocessedModule(const std::string &mod, const std::vector<uint8_t> &vec) : module(mod), buffer(vec) {}
 };
 
+/* */
+struct GraphNode {
+    std::string module;
+    std::vector<std::string> dependencies;
+
+    GraphNode(const std::string &mod) : module(mod) {}
+};
+
+/* */
 class DependencyGraph {
     std::map<std::string, GraphNode> nodes;
+    std::vector<std::string> compilation_order;
 
-    bool dfs() const noexcept;
+    bool dfs_search_cycles() const noexcept;
 
 public:
     enum VisitState {
@@ -42,12 +56,15 @@ public:
 
     GraphNode& add_node(const std::string&);
     void add_dependency(const std::string&, const std::string&) noexcept;
+    void topological_sort() noexcept;
+    const std::vector<std::string>& get_order() const noexcept { return compilation_order; }
 
 #ifdef OPTIC_DEBUG
     void print_nodes();
 #endif
 };
 
+/* */
 class Macro {
     std::string name;
     std::string value;
@@ -57,17 +74,33 @@ public:
     // TODO
 };
 
-class Preprocessor {
-    SourceLocation loc;
-    Module module;
-    DependencyGraph &graph;
+/* */
+struct PreprocessorContext {
+    DiagnosticEngine *diagnostic_engine;
+    DependencyGraph *graph;
 
-    std::string get_module_name(const std::string_view&, size_t&);
-    std::string read_keyword(const std::string_view&, size_t&);
+    PreprocessorContext(DiagnosticEngine *diag_engine, DependencyGraph *g) : diagnostic_engine(diag_engine), graph(g) {}
+};
+
+/* */
+class Preprocessor {
+    PreprocessorContext preprocessor_context;
+
+    void skip_comments(std::vector<uint8_t>&, size_t&, SourceLocation&);
+    void include_module(const Module&, std::vector<uint8_t>&, size_t&, SourceLocation&);
+
+    std::string get_module_name(const std::vector<uint8_t>&, size_t&, SourceLocation&);
+    std::string read_keyword(const std::vector<uint8_t>&, size_t&, SourceLocation&);
 
 public:
-    Preprocessor(Module mod, DependencyGraph &g) :
-        module(mod), graph(g) { loc.file = mod.module_path; }
+    Preprocessor(const PreprocessorContext &pr_ctx) : preprocessor_context(pr_ctx) {}
 
-    void analyze(std::string_view);
+    PreprocessedModule analyze(const std::string&, std::vector<uint8_t>&);
+    void sort_modules() noexcept { preprocessor_context.graph->topological_sort(); }
+
+#ifdef OPTIC_DEBUG
+    void print_modules() noexcept { preprocessor_context.graph->print_nodes(); }
+#endif
+
+    void combine_modules(std::vector<uint8_t>&, const std::unordered_map<std::string, PreprocessedModule>&);
 };

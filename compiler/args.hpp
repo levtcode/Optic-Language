@@ -11,6 +11,7 @@ std::string get_option_name(const std::string&, size_t*);
 void process_arg(const std::string&, CompilerInstance&);
 void get_args(int, char **, CompilerInstance&);
 void call_usage(bool=false);
+void apply_configs(CompilerInstance&);
 
 #ifdef OPTIC_DEBUG
 void print_args(CompilerArgs&);

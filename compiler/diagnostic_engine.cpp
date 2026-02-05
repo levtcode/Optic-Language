@@ -62,11 +62,3 @@ void DiagnosticEngine::show_all() noexcept {
         print_info(diag, diag.loc.source_kind);
     }
 }
-
-[[noreturn]] void DiagnosticEngine::compiler_stop(bool generate_core_dump) noexcept {
-    show_all();
-    if (generate_core_dump)
-        abort();
-    else
-        exit(1);
-}

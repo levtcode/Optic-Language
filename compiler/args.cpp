@@ -124,7 +124,7 @@ void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
             DiagnosticLevel::FatalError
         );
         // call_usage ...
-        compiler_instance.diagnostic_engine.compiler_stop();
+        compiler_instance.stop();
     }
 
     int index = 1;
@@ -144,5 +144,11 @@ void call_usage(bool help_manual) {
         // TODO
     } else {
         std::cerr << "Usage: ..."; // TODO ...
+    }
+}
+
+void apply_configs(CompilerInstance &compiler_instance) {
+    if (compiler_instance.compiler_args.flags["-Wall"]) {
+        // TODO
     }
 }

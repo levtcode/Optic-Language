@@ -34,6 +34,7 @@ struct SourceLocation {
 struct DiagnosticConfig {
     bool color_diagnostics = true;
     bool guide_engine = false;
+    bool all_warnings = false;
     // More options soon
 };
 
