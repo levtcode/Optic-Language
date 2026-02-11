@@ -28,9 +28,10 @@ struct Module {
 struct PreprocessedModule {
     std::string module;
     std::vector<uint8_t> buffer;
+    bool error_flag = false;
 
     PreprocessedModule() = default;
-    PreprocessedModule(const std::string &mod, const std::vector<uint8_t> &vec) : module(mod), buffer(vec) {}
+    PreprocessedModule(const std::string &mod) : module(mod) {}
 };
 
 /* */
@@ -65,10 +66,11 @@ public:
 };
 
 /* */
+template<typename MacroValue>
 class Macro {
-    std::string name;
-    std::string value;
-    std::string expr;
+    const std::string name;
+    const MacroValue value;
+    const std::string expr;
 
 public:
     // TODO
@@ -86,21 +88,23 @@ struct PreprocessorContext {
 class Preprocessor {
     PreprocessorContext preprocessor_context;
 
-    void skip_comments(std::vector<uint8_t>&, size_t&, SourceLocation&);
-    void include_module(const Module&, std::vector<uint8_t>&, size_t&, SourceLocation&);
+    void include_module(const Module&, std::vector<uint8_t> &buff, size_t &cur, SourceLocation&);
+    bool is_valid_directive(const std::string&);
 
-    std::string get_module_name(const std::vector<uint8_t>&, size_t&, SourceLocation&);
-    std::string read_keyword(const std::vector<uint8_t>&, size_t&, SourceLocation&);
+    std::string get_directive_name(const std::vector<uint8_t> &buff, size_t &cur, SourceLocation&);
+    std::string get_macro_name(const std::vector<uint8_t> &buff, size_t &cur, SourceLocation&);
+    std::string get_module_name(const std::vector<uint8_t> &buff, size_t &cur, SourceLocation&);
+    std::string read_keyword(const std::vector<uint8_t> &buff, size_t &cur, SourceLocation&);
 
 public:
     Preprocessor(const PreprocessorContext &pr_ctx) : preprocessor_context(pr_ctx) {}
 
-    PreprocessedModule analyze(const std::string&, std::vector<uint8_t>&);
+    PreprocessedModule analyze(const std::string &mod, std::vector<uint8_t> &buff);
     void sort_modules() noexcept { preprocessor_context.graph->topological_sort(); }
 
 #ifdef OPTIC_DEBUG
     void print_modules() noexcept { preprocessor_context.graph->print_nodes(); }
 #endif
 
-    void combine_modules(std::vector<uint8_t>&, const std::unordered_map<std::string, PreprocessedModule>&);
+    void combine_modules(std::vector<uint8_t> &out, const std::unordered_map<std::string, PreprocessedModule> &modules);
 };

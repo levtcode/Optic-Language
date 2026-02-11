@@ -1,6 +1,7 @@
 /* compiler_instance.hpp */
 
 #pragma once
+
 #include "diagnostic_engine.hpp"
 
 #include <vector>
@@ -9,7 +10,17 @@
 #include <cstdint>
 
 constexpr const char *optic_extension = ".optic";
+enum class TokenType;
 using ArgValue = std::variant<int, bool, std::string>;
+
+struct token_t {
+    TokenType type;
+    std::string value;
+    SourceLocation loc;
+    
+    token_t(const TokenType typ, const std::string &val, const SourceLocation &location) : 
+    type(typ), value(val), loc(location) {}
+};
 
 /* */
 struct CompilerArgs {
@@ -34,14 +45,16 @@ struct TargetInfo {
 
 /* */
 struct CompilerContext {
+    std::vector<SourceLocationRange> ranges;
     std::vector<uint8_t> combined_buffer;
+    std::vector<token_t> tokens;
 };
 
 /* */
 class CompilerInstance {
     void preprocess(CompilerContext&) noexcept;
-    void lexing();
-    void parsing();
+    void lexing(CompilerContext&) noexcept;
+    void parsing(CompilerContext&) noexcept;
     // more methods soon
 
 public:

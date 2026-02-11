@@ -1,7 +1,10 @@
 /* tables.hpp */
 
+#pragma once
+
 #include <unordered_map>
 #include <string_view>
+
 #include "tokens.hpp"
 
 const std::unordered_map<std::string_view, TokenType> operator_table = {
@@ -39,8 +42,6 @@ const std::unordered_map<std::string_view, TokenType> operator_table = {
 };
 
 const std::unordered_map<std::string_view, TokenType> keyword_table = {
-    {"import", TokenType::Import},
-    {"directive", TokenType::Directive},
     {"macro", TokenType::Macro},
     {"asm", TokenType::Asm},
     {"if", TokenType::If},

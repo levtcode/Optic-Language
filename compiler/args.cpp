@@ -9,6 +9,7 @@ const SourceLocation loc(SourceKind::Stdin, "", "", 0, 0);
 
 #ifdef OPTIC_DEBUG
 
+/* */
 void print_args_files(std::vector<std::string> &files) {
     std::cout << "Files:\n";
     for (const auto &f : files) {
@@ -16,6 +17,7 @@ void print_args_files(std::vector<std::string> &files) {
     }
 }
 
+/* */
 void print_args_options(std::unordered_map<std::string, ArgValue> &options) {
     std::cout << "\nCompiler options:\n";
     for (const auto &[key, value] : options) {
@@ -35,6 +37,7 @@ void print_args_options(std::unordered_map<std::string, ArgValue> &options) {
     }
 }
 
+/* */
 void print_args_flags(std::unordered_map<std::string, bool> &flags) {
     std::cout << "\nCompiler flags:\n";
     for (const auto &[key, value] : flags) {
@@ -51,7 +54,9 @@ void print_args_flags(std::unordered_map<std::string, bool> &flags) {
     std::cout << "\n";
 }
 
+/* */
 void print_args(CompilerArgs &args) {
+    std::cout << "----- PRINTING COMPILER ARGUMENTS -----\n\n";
     print_args_files(args.files);
     print_args_options(args.options);
     print_args_flags(args.flags);
@@ -75,7 +80,13 @@ ArgValue get_arg_value(const std::string &raw, int index, bool *invalid, Diagnos
         return value.substr(1, value.size() - 2);
     }
 
-    diagnostic_engine.report(loc, std::format("Error: Invalid argument type: {}\n", value), DiagnosticLevel::Error);
+    diagnostic_engine.report(
+        loc,
+        std::format("Error: Invalid argument type: {}\n", value),
+        "Solution: Use a valid argument value. Valid types: [int: 42, float: 3.1416, bool: true, string: '<text>']\n",
+        "",
+        DiagnosticLevel::Error
+    );
     *invalid = true;
     return "";
 }
@@ -121,6 +132,12 @@ void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
         compiler_instance.diagnostic_engine.report(
             loc,
             "Error: Not enough arguments provided in the command line\n",
+            "Solution: Provide a least 2 arguments. For example:\n\t> optic ./file1.optic\n\n",
+
+            "More information: Optic compiler (OpticLang) needs to process a least 2 arguments. The first " \
+            "argument is the absolute path to the running program (optic -> /usr/bin/optic). The second " \
+            "argument is the relative or absolute path to the Optic file; in our example './file.optic'.\n" \
+            "Note: This rule applies to practically all compilers (clang, gcc, rustc...)\n\n",
             DiagnosticLevel::FatalError
         );
         // call_usage ...
@@ -147,6 +164,7 @@ void call_usage(bool help_manual) {
     }
 }
 
+/* */
 void apply_configs(CompilerInstance &compiler_instance) {
     if (compiler_instance.compiler_args.flags["-Wall"]) {
         // TODO

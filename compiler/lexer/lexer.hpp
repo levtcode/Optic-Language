@@ -1,24 +1,17 @@
 /* lexer.hpp */
 
 #pragma once
-#include "trie_operators.hpp"
+
+#include "../compiler_instance.hpp"
 #include "../diagnostic_engine.hpp"
 
 #include <vector>
 #include <string>
 
-struct token_t {
-    TokenType type;
-    std::string value;
-    SourceLocation loc;
-    
-    token_t(const TokenType typ, const std::string &val, const SourceLocation &location) : 
-    type(typ), value(val), loc(location) {}
-};
-
 class Lexer {
-    std::string_view buffer;
-    SourceLocation loc;
+    const std::vector<uint8_t> *buffer;
+    const std::vector<SourceLocationRange> *location_ranges;
+    DiagnosticEngine *diagnostic_engine;
     size_t pos = 0;
     bool reached_eof = false;
 
@@ -28,32 +21,31 @@ class Lexer {
     bool iseof() const noexcept;
 
 public:
-    Lexer(const std::string &f, const char *fn) : buffer(f) { loc.file = fn; }
+    Lexer(
+        const std::vector<uint8_t> *buff,
+        const std::vector<SourceLocationRange> *loc_ranges,
+        DiagnosticEngine *diag_engine
+    ) : buffer(buff), location_ranges(loc_ranges), diagnostic_engine(diag_engine) {}
 
-    token_t read_identifier();
-    token_t read_string();
-    token_t read_number();
-    token_t read_operator();
+    token_t read_identifier(SourceLocation&) noexcept;
+    token_t read_string(SourceLocation&) noexcept;
+    token_t read_number(SourceLocation&) noexcept;
+    token_t read_operator(SourceLocation&) noexcept;
 
-    bool is_symbol(const int);
-    bool is_operator(const int);
+    bool is_symbol(const int) const noexcept;
+    bool is_operator(const int) const noexcept;
 
-    char read_escape(int);
+    char read_escape(int) const noexcept;
 
-    void ignore_comment();
-    void read_octal_escape(std::string &);
-    void read_hexadecimal_escape(std::string &);
-    void read_unicode_escape(std::string &, const int);
+    void read_octal_escape(std::string&, SourceLocation&) noexcept;
+    void read_hexadecimal_escape(std::string&, SourceLocation&) noexcept;
+    void read_unicode_escape(std::string&, const int) noexcept;
 
-    void tokenize();
+    void tokenize(std::vector<token_t>&) noexcept;
 #ifdef OPTIC_DEBUG
-    void print();
-#else
-    // Code here
+    void print_tokens(const std::vector<token_t>&) noexcept;
 #endif
 };
-
-extern std::vector<token_t> tokens;
 
 #ifdef OPTIC_DEBUG
 const char *to_string_token(TokenType &type);

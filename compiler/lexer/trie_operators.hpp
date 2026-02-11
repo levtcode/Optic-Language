@@ -1,6 +1,10 @@
 /* trie_operators.hpp */
 
-#include "tables.hpp"
+#pragma once
+
+#include "tokens.hpp"
+
+#include <unordered_map>
 #include <string>
 
 struct TrieNode {

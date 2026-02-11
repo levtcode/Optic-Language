@@ -1,14 +1,16 @@
 /* tokens.hpp */
 
-#ifdef OPTIC_DEBUG
+#pragma once
 
-enum class TokenType {
-#define X(name) name,
-#include "tokens_types.def"
-#undef X
-};
+// #ifdef OPTIC_DEBUG
 
-#else
+// enum class TokenType {
+// #define X(name) name,
+// #include "tokens_types.def"
+// #undef X
+// };
+
+// #else
 
 enum class TokenType {
     // Types
@@ -125,4 +127,4 @@ enum class TokenType {
     EndOfFile       // EOF
 };
 
-#endif
+// #endif

@@ -4,6 +4,7 @@
 #include "args.hpp"
 #include "diagnostic_engine.hpp"
 #include "preprocessor/preprocessor.hpp"
+#include "lexer/lexer.hpp"
 
 #include <cstddef>
 #include <cstdlib>
@@ -33,6 +34,11 @@ bool get_data(const std::string fname, std::vector<uint8_t> &dest, DiagnosticEng
         diagnostic_engine.report(
             srcloc,
             std::format("Error: Cant open file '{}'. File does not exists.\n", fname),
+            "Solution: Check if the file exists on your system path, if doesnt, create the file yourself.\n",
+
+            "More information: This happens because the OS (Operating System) tries to access to the " \
+            "specified path, but the resource does not exists in that path. So, the OS returns a null pointer " \
+            "to that resource, causing it to be imposible to read or write in that resource\n",
             DiagnosticLevel::Error
         );
         return false;
@@ -47,6 +53,8 @@ bool get_data(const std::string fname, std::vector<uint8_t> &dest, DiagnosticEng
         diagnostic_engine.report(
             srcloc,
             std::format("Error: Failed to read file '{}', IO error.\n", fname),
+            "Solution: Verify if your file contains a valid format (UTF-8 for example...) and isnt a binary file.\n",
+            "More information: ...",
             DiagnosticLevel::Error
         );
         fclose(f);
@@ -58,13 +66,15 @@ bool get_data(const std::string fname, std::vector<uint8_t> &dest, DiagnosticEng
 }
 
 /* */
+[[nodiscard]]
 int CompilerInstance::run(int argc, char *argv[]) noexcept {
     CompilerContext compiler_context;
 
     get_args(argc, argv, *this);
     preprocess(compiler_context);
+    lexing(compiler_context);
 
-    diagnostic_engine.show_all();
+    diagnostic_engine.get_config().guide_engine ? diagnostic_engine.run_guide_engine() : diagnostic_engine.show_all();
     return (diagnostic_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
@@ -94,21 +104,30 @@ void CompilerInstance::preprocess(CompilerContext &compiler_context) noexcept {
         if (!fname.ends_with(optic_extension)) {
             diagnostic_engine.report(srcloc,
                 std::format("Error: File '{}' is not a Optic file '{}', cant be processed.\n", fname, optic_extension),
+                "",
+                "",
                 DiagnosticLevel::Error
             );
             continue;
         }
 
         if (!get_data(fname, data, diagnostic_engine)) continue;
-
         Module module(fname);
 
         if (!processed_modules.contains(module.module_name)) {
-            processed_modules[module.module_name] = preprocessor.analyze(module.module_name, data);
+            PreprocessedModule mod = preprocessor.analyze(module.module_name, data);
+
+            if (mod.error_flag)
+                stop();
+            else
+                processed_modules[module.module_name] = mod;
         } else {
+            processed_modules.extract(module.module_name);
             diagnostic_engine.report(
                 srcloc,
                 std::format("Warning: This module is already processed: '{}'. Skipping this module.\n", module.module_name),
+                "Solution: Avoid passing the same file as an argument multiple times; only pass it once.\n",
+                "",
                 DiagnosticLevel::Warning
             );
         }
@@ -124,4 +143,10 @@ void CompilerInstance::preprocess(CompilerContext &compiler_context) noexcept {
     print_combined_buffer(output);
 #endif
     compiler_context.combined_buffer = std::move(output);
+}
+
+/* */
+void CompilerInstance::lexing(CompilerContext &compiler_context) noexcept {
+    Lexer lexer(&compiler_context.combined_buffer, &compiler_context.ranges, &diagnostic_engine);
+    lexer.tokenize(compiler_context.tokens);
 }

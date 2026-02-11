@@ -2,11 +2,24 @@
 
 #include "preprocessor.hpp"
 
-#include <cctype>
 #include <iostream>
 #include <cstddef>
 
-std::vector<Macro> macros;	// SOON: Dont let 'macros' variable be global, use a local variable instead
+/* MUCH LATER: How 'compiletime' works
+
+compiletime {
+	// Add code here...
+}
+
+*/
+
+/* MUCH LATER: How 'macro' syntax will be
+
+macro MyMacro {
+	value = -1
+}
+
+*/
 
 // ========== Dependency Graph methods ==========
 
@@ -115,6 +128,46 @@ bool DependencyGraph::dfs_search_cycles() const noexcept {
 // ========== Preprocessor methods ==========
 
 /* */
+bool Preprocessor::is_valid_directive(const std::string &directive_name) { // Probably, this will be refactored
+	if (directive_name == "disk_binary") return true;
+	if (directive_name == "_WIN32") return true;
+	if (directive_name == "_WIN64") return true;
+	if (directive_name == "_POSIX_VERSION") return true;
+	// More directives...
+	return false;
+}
+
+/* */
+std::string Preprocessor::get_directive_name(const std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
+	std::string directive_name;
+
+	while (cursor < buffer.size() && (isalpha(buffer[cursor]) || buffer[cursor] == '_')) {
+		directive_name += buffer[cursor++];
+		loc.column++;
+	}
+
+	if (cursor < buffer.size() && buffer[cursor] == '\n') {
+		loc.line++;
+		loc.column = 1;
+		cursor++;
+	}
+
+	return directive_name;
+}
+
+/* */
+std::string Preprocessor::get_macro_name(const std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
+	std::string macro_name;
+
+	while (cursor < buffer.size() && (isalpha(buffer[cursor]) || buffer[cursor] == '_')) {
+		macro_name += buffer[cursor++];
+		loc.column++;
+	}
+
+	return macro_name;
+}
+
+/* */
 std::string Preprocessor::get_module_name(const std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
 	std::string module_;
 
@@ -144,39 +197,7 @@ std::string Preprocessor::read_keyword(const std::vector<uint8_t> &buffer, size_
 	return keyword;
 }
 
-void Preprocessor::skip_comments(std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
-	while (cursor < buffer.size()) {
-		if (buffer[cursor] == '/') {
-			cursor++;
-			if (cursor < buffer.size()) break;
-
-			if (buffer[cursor] == '/') {
-				while ((cursor < buffer.size()) && (buffer[cursor] != '\n')) cursor++;
-
-				if (cursor < buffer.size()) {
-					loc.line++;
-					loc.column = 1;
-				}
-
-			} else if (buffer[cursor] == '*') {
-				cursor++;
-				
-				while ((cursor < buffer.size() - 1) && !(buffer[cursor] == '*' && buffer[cursor + 1] == '/')) {
-					if (buffer[cursor] == '\n') {
-						loc.line++;
-						loc.column = 1;
-					}
-					cursor++;
-				}
-			}
-
-			break;
-		}
-		
-		break;
-	}
-}
-
+/* */
 void Preprocessor::include_module(const Module &mod, std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
 	while (cursor < buffer.size() && isspace(buffer[cursor]) && buffer[cursor] != '\n') cursor++;
 	std::string dep_name = get_module_name(buffer, cursor, loc);
@@ -185,19 +206,52 @@ void Preprocessor::include_module(const Module &mod, std::vector<uint8_t> &buffe
 
 /* */
 PreprocessedModule Preprocessor::analyze(const std::string &mod_name, std::vector<uint8_t> &buffer) {
-	PreprocessedModule module(mod_name, buffer);
-	SourceLocation loc;
+	PreprocessedModule module(mod_name);
+	SourceLocation loc(SourceKind::BufferNoAST, mod_name, "", 1, 1);
 	size_t cursor = 0;
 	
 	loc.file = mod_name;
 
 	while (cursor < buffer.size()) {
-		skip_comments(buffer, cursor, loc);
+		if (buffer[cursor] == '/') {
+			cursor++;
+
+			if ((cursor < buffer.size()) && (buffer[cursor] == '/')) {
+				while ((cursor < buffer.size()) && (buffer[cursor] != '\n')) { cursor++; loc.column++; }
+			} else if (cursor < buffer.size() && buffer[cursor] == '*') {
+				cursor++;
+				loc.column++;
+				
+				while ((cursor < buffer.size()) && !(buffer[cursor] == '*' && buffer[cursor + 1] == '/')) {
+					if (buffer[cursor] == '\n') {
+						loc.line++;
+						loc.column = 1;
+					}
+					loc.column++;
+					cursor++;
+				}
+
+				if (cursor == buffer.size()) {
+					preprocessor_context.diagnostic_engine->report(
+						loc,
+						"Error: Block comment not closed.",
+						"Solution: Append '*/' to the end of the block comment.\n",
+						"",
+						DiagnosticLevel::FatalError
+					);
+					module.error_flag = true;
+					return module;
+				}
+
+				if (cursor >= buffer.size() - 2) return module;
+			}
+			continue;
+		}
 
 		if (buffer[cursor] == '\n') {
 			loc.line++;
 			loc.column = 1;
-			cursor++;
+			module.buffer.push_back(buffer[cursor++]);
 			continue;
 		}
 
@@ -205,25 +259,31 @@ PreprocessedModule Preprocessor::analyze(const std::string &mod_name, std::vecto
 			size_t start_ = cursor;
 			std::string keyword = read_keyword(buffer, cursor, loc);
 
-			if (keyword == "import") {
-				include_module(mod_name, buffer, cursor, loc);
-				module.buffer.erase(module.buffer.begin() + start_, module.buffer.begin() + cursor);
-			}
+			if (keyword == "import") include_module(mod_name, buffer, cursor, loc);
 
 			else if (keyword == "directive") {
-				// TODO
+				while (cursor < buffer.size() && isspace(buffer[cursor]) && buffer[cursor] != '\n') cursor++;
+				std::string directive = get_directive_name(buffer, cursor, loc);
+
+				// TODO: add logic to detect directive conflicts
 			}
 
 			else if (keyword == "macro") {
 				// TODO
 			}
 
-			else if (keyword == "ifdef") {
+			else if (keyword == "compiletime") {
 				// TODO
+			}
+
+			else {
+				for (size_t i = start_; i < cursor; i++) {
+					module.buffer.push_back(buffer[i]);
+				}
 			}
 		}
 
-		cursor++;
+		module.buffer.push_back(buffer[cursor++]);
 		loc.column++;
 	}
 
@@ -232,6 +292,12 @@ PreprocessedModule Preprocessor::analyze(const std::string &mod_name, std::vecto
 
 /* */
 void Preprocessor::combine_modules(std::vector<uint8_t> &output, const std::unordered_map<std::string, PreprocessedModule> &processed_modules) {
+	if (!preprocessor_context.graph->get_order().size()) {
+		auto it = processed_modules.begin();
+		output.insert(output.begin(), it->second.buffer.begin(), it->second.buffer.end());
+		return;
+	}
+
 	for (const std::string &module : preprocessor_context.graph->get_order()) {
 		auto it = processed_modules.find(module);
 		output.insert(output.end(), it->second.buffer.begin(), it->second.buffer.end());

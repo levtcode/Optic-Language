@@ -1,370 +1,321 @@
-// /* lexer.cpp */
+/* lexer.cpp */
 
-// #include "lexer.hpp"
+#include "lexer.hpp"
+#include "trie_operators.hpp"
+#include "tables.hpp"
 
-// #include <iostream>
-// #include <format>
-
-// std::string fname;
-// std::vector<token_t> tokens;
-
-// int Lexer::get() noexcept {
-//    if (pos >= size) {
-//        reached_eof = true;
-//        return EOF;
-//    }
+int Lexer::get() noexcept {
+    if (pos >= buffer->size()) {
+       reached_eof = true;
+       return EOF;
+    }
    
-//    return buffer[pos++];
-// }
+    return buffer->at(pos++);
+}
 
-// int Lexer::next() const noexcept {
-//    return (pos + 1 < size) ? buffer[pos + 1] : EOF;
-// }
+int Lexer::next() const noexcept {
+    return (pos + 1 < buffer->size()) ? buffer->at(pos + 1) : EOF;
+}
 
-// int Lexer::peek() const noexcept {
-//    return (pos < size) ? buffer[pos] : EOF;
-// }
+int Lexer::peek() const noexcept {
+    return (pos < buffer->size()) ? buffer->at(pos) : EOF;
+}
 
-// bool Lexer::iseof() const noexcept {
-//    return reached_eof;
-// }
+bool Lexer::iseof() const noexcept {
+    return reached_eof;
+}
 
-// bool is_octal(int c) {
-//    return (c >= '0' && c <= '7');
-// }
+bool is_octal(int c) {
+    return (c >= '0' && c <= '7');
+}
 
-// bool is_numeric(int c) {
-//    return (isdigit(c) || (c == '.') || 
-//            (c == 'e') || (c == 'E') || 
-//            (c == '+') || (c == '-'));
-// }
+bool is_numeric(int c) {
+    return (isdigit(c) || (c == '.') || 
+            (c == 'e') || (c == 'E') || 
+            (c == '+') || (c == '-'));
+}
 
-// bool is_prefix_of_operator(const std::string &s) {
-//    for (const auto &[op, _] : operator_table) {
-//        if (op.starts_with(s)) return true;
-//    }
-//    return false;
-// }
+bool is_prefix_of_operator(const std::string &s) {
+    for (const auto &[op, _] : operator_table) {
+        if (op.starts_with(s)) return true;
+    }
+    return false;
+}
 
-// char Lexer::read_escape(int c) {
-//    switch (c) {
-//        case 'a': return '\a';
-//        case 'b': return '\b';
-//        case 't': return '\t';
-//        case 'n': return '\n';
-//        case 'f': return '\f';
-//        case 'r': return '\r';
-//        case '"': return '\"';
-//        case '\'': return '\'';
-//        default: return c;
-//    }
-// }
+char Lexer::read_escape(int c) const noexcept {
+    switch (c) {
+        case 'a': return '\a';
+        case 'b': return '\b';
+        case 't': return '\t';
+        case 'n': return '\n';
+        case 'f': return '\f';
+        case 'r': return '\r';
+        case '"': return '\"';
+        case '\'': return '\'';
+        default: return c;
+    }
+}
 
-// /* */
-// void Lexer::read_octal_escape(std::string &str) {
-//    std::string tmp_buf;
-//    int n, c = get();
+/* */
+void Lexer::read_octal_escape(std::string &str, SourceLocation &loc) noexcept {
+    std::string tmp_buf;
+    int n, c = get();
 
-//    do {
-//        tmp_buf += c;
-//        col++;
-//    } while (!iseof() && is_octal(c = get()));
-//    --pos;
+    do {
+        tmp_buf += c;
+        loc.column++;
+    } while (!iseof() && is_octal(c = get()));
+    --pos;
 
-//    if ((n = std::stoi(tmp_buf, nullptr, 8)) > 255) {
-//        std::cerr << std::format(
-//            "On file: {}; at line: {}, in colunm: {}.\n" \
-//            "Warning: Octal sequence out of range, n > 255, n is {} (max ASCII value is 255).\n\n",
-//            fname, line, col, n
-//        );
-//    }
+    if ((n = std::stoi(tmp_buf, nullptr, 8)) > 255) {
+        // Error
+    }
 
-//    str += n;
-// }
+    str += n;
+}
 
-// /* */
-// void Lexer::read_hexadecimal_escape(std::string &str) {
-//    std::string tmp_buf;
-//    short int n, c = get();
+/* */
+void Lexer::read_hexadecimal_escape(std::string &str, SourceLocation &loc) noexcept {
+    std::string tmp_buf;
+    short int n, c = get();
 
-//    do {
-//        tmp_buf += c;
-//        col++;
-//    } while (!iseof() && isxdigit(c = get()));
-//    --pos;
+    do {
+        tmp_buf += c;
+        loc.column++;
+    } while (!iseof() && isxdigit(c = get()));
+    --pos;
 
-//    if ((n = std::stoi(tmp_buf, nullptr, 16)) > 255) {
-//        std::cerr << std::format(
-//            "On file: {}; at line: {}, in colunm: {}.\n" \
-//            "Warning: Hex sequence out of range, n > 255, n is {} (max ASCII value is 255).\n\n",
-//            fname, line, col, n
-//        );
-//    }
+    if ((n = std::stoi(tmp_buf, nullptr, 16)) > 255) {
+        // Error
+    }
 
-//    str += n;
-// }
+   str += n;
+}
 
-// /* */
-// void Lexer::read_unicode_escape(std::string &str, int bytes) {
-//    return;
-// }
+/* */
+void Lexer::read_unicode_escape(std::string &str, int bytes) noexcept {
+    return;
+}
 
-// /* */
-// token_t Lexer::read_identifier() {
-//    int start_col = col, c = get();
-//    std::string word;
+/* */
+token_t Lexer::read_identifier(SourceLocation &loc) noexcept {
+    SourceLocation _start;
+    std::string word;
+    int c = get();
 
-//    do {
-//        word += c;
-//        col++;
-//    } while (!iseof() && (isalnum(c = get()) || c == '_'));
-//    --pos;
+    _start.column = loc.column;
 
-//    if (keyword_table.find(word) != keyword_table.end()) return token_t(keyword_table.at(word), word, line, start_col);
-//    return token_t(TokenType::Identifier, word, line, start_col);
-// }
+    do {
+        word += c;
+        loc.column++;
+    } while (!iseof() && (isalnum(c = get()) || c == '_'));
+    --pos;
 
-// /* */
-// token_t Lexer::read_string() {
-//    int start_col = col;
-//    int quote = get(), tmp = get();
-//    std::string str;
+    if (keyword_table.find(word) != keyword_table.end()) return token_t(keyword_table.at(word), word, _start);
+    return token_t(TokenType::Identifier, word, loc);
+}
 
-//    str += tmp;
-//    col += 2;
+/* */
+token_t Lexer::read_string(SourceLocation &loc) noexcept {
+    SourceLocation _start = loc;
+    std::string str;
+    int quote = get(), tmp = get();
 
-//    while (!iseof() && (tmp = get()) != quote) {
-//        if (tmp == '\\') {
-//            tmp = get();
-//            col++;
+    _start.column = loc.column;
 
-//            if (is_octal(tmp)) {
-//                --pos;
-//                read_octal_escape(str);
-//                continue;
-//            }
+    str += tmp;
+    loc.column += 2;
 
-//            if (tmp == 'x') {
-//                col++;
-//                read_hexadecimal_escape(str);
-//                continue;
-//            }
+    while (!iseof() && (tmp = get()) != quote) {
+        if (tmp == '\\') {
+            tmp = get();
+            loc.column++;
 
-//            if (tmp == 'u' || tmp == 'U') {
-//                // TODO
-//                continue;
-//            }
+            if (is_octal(tmp)) {
+                --pos;
+                read_octal_escape(str, loc);
+                continue;
+            }
 
-//            else {
-//                str += read_escape(tmp);
-//                col += 2;
-//                continue;
-//            }
-//        }
+            if (tmp == 'x') {
+                loc.column++;
+                read_hexadecimal_escape(str, loc);
+                continue;
+            }
 
-//        str += tmp;
-//        col++;
-//    }
+            if (tmp == 'u' || tmp == 'U') {
+                // TODO
+                continue;
+            }
+
+            else {
+                str += read_escape(tmp);
+                loc.column += 2;
+                continue;
+            }
+        }
+
+        str += tmp;
+        loc.column++;
+    }
    
-//    if (tmp != quote) {
-//        // Throw
-//    }
+    if (tmp != quote) {
+        // Error
+    }
 
-//    return token_t(TokenType::String, str, line, start_col);
-// }
+    return token_t(TokenType::String, str, _start);
+}
 
-// /* */
-// token_t Lexer::read_number() {
-//    int start_col = col, c = get();
-//    std::string number;
-//    bool flag = false;
+/* */
+token_t Lexer::read_number(SourceLocation &loc) noexcept {
+    SourceLocation _start = loc;
+    std::string number;
+    int c = get();
+    bool flag = false;
 
-//    number += c;
-//    col++;
+    _start.column = loc.column;
 
-//    while (!iseof() && is_numeric(c = get())) {
-//        if (c == '.' || c == 'e' || c == 'E') flag = true;
-//        number += c;
-//        col++;
-//    }
-//    --pos;
+    number += c;
+    loc.column++;
 
-//    return token_t((flag) ? TokenType::Float : TokenType::Int, number, line, start_col);
-// }
+    while (!iseof() && is_numeric(c = get())) {
+        if (c == '.' || c == 'e' || c == 'E') flag = true;
+        number += c;
+        loc.column++;
+    }
+    --pos;
 
-// /* */
-// token_t Lexer::read_operator() {
-//    // TODO
-// }
+    return token_t((flag) ? TokenType::Float : TokenType::Int, number, _start);
+}
 
-// /* */
-// void Lexer::ignore_comment() {
-//    int c = get();
+/* */
+token_t Lexer::read_operator(SourceLocation &loc) noexcept {
+    return token_t(TokenType::Return, "", loc);
+}
 
-//    if (c == '*') {
-//        col++;
-//        while (!iseof()) {
-//            c = get();
+bool Lexer::is_symbol(const int c) const noexcept {
+    return ((c == '(') || (c == ')') ||
+            (c == '{') || (c == '}') ||
+            (c == '[') || (c == ']') ||
+            (c == ';') || (c == ':') ||
+            (c == ',') || (c == '.'));
+}
 
-//            if (c == '\n') {
-//                line++;
-//                col = 1;
-//                continue;
-//            }
+bool Lexer::is_operator(const int c) const noexcept {
+    return ((c == '=') || (c == '+') || (c == '-') ||
+            (c == '*') || (c == '%') || (c == '&') ||
+            (c == '|') || (c == '~') || (c == '^') ||
+            (c == '<') || (c == '>') || (c == '!'));
+}
 
-//            if (c == '*') {
-//                if (peek() == '/') {
-//                    get();
-//                    col += 2;
-//                    return;
-//                }
-//            }
+/* */
+void Lexer::tokenize(std::vector<token_t> &tokens) noexcept {
+    SourceLocation loc;
+    int c;
 
-//            col++;
-//        }
+    while (!iseof()) {
+        c = get();
 
-//        // Throw not closed block comment
-//    }
+        if (c == ' ' || c == '\t') {
+            loc.column++;
+            continue;
+        }
 
-//    else {
-//        do {
-//            col++;
-//        } while (!iseof() && (c = get()) != '\n');
-       
-//        if (c == '\n') {
-//            line++;
-//            col = 1;
-//        }
-//    }
-// }
+        if (c == '\n') {
+            loc.line++;
+            loc.column = 1;
+            continue;
+        }
 
-// bool Lexer::is_symbol(const int c) {
-//    return ((c == '(') || (c == ')') ||
-//            (c == '{') || (c == '}') ||
-//            (c == '[') || (c == ']') ||
-//            (c == ';') || (c == ':') ||
-//            (c == ',') || (c == '.'));
-// }
+        if (is_symbol(c)) {
+            tokens.emplace_back(
+                symbol_table.at(c),
+                std::string(1, static_cast<char>(c)),
+                loc
+            );
+            loc.column++;
+            continue;
+        }
 
-// bool Lexer::is_operator(const int c) {
-//    return ((c == '=') || (c == '+') || (c == '-') ||
-//            (c == '*') || (c == '%') || (c == '&') ||
-//            (c == '|') || (c == '~') || (c == '^') ||
-//            (c == '<') || (c == '>') || (c == '!'));
-// }
+        if (c == '\'' || c == '"') {
+            --pos;
+            tokens.emplace_back(read_string(loc));
+            loc.column++;
+            continue;
+        }
 
-// /* */
-// void Lexer::tokenize() {
-//    std::string last_word; // for error inline printing
-//    int c;
-
-//    while (!iseof()) {
-//        c = get();
-
-//        if (c == ' ' || c == '\t') {
-//            col++;
-//            continue;
-//        }
-
-//        if (c == '\n') {
-//            line++;
-//            col = 1;
-//            continue;
-//        }
-
-//        if (is_symbol(c)) {
-//            tokens.emplace_back(
-//                symbol_table.at(c),
-//                std::string(1, static_cast<char>(c)),
-//                line,
-//                col
-//            );
-//            col++;
-//            continue;
-//        }
-
-//        if (c == '\'' || c == '"') {
-//            --pos;
-//            tokens.emplace_back(read_string());
-//            col++;
-//            continue;
-//        }
-
-//        if (c == '/') {
-//            if (peek() == '/' || peek() == '*') {
-//                ignore_comment();
-//                continue;
-//            } else {
-//                tokens.emplace_back(TokenType::Slash, "/", line, col);
-//                col++;
-//                continue;
-//            }
-//        }
+        if (c == '/') {
+            // TODO: APPEND OPERATOR DIV '/'
+        }
    
-//        if (is_operator(c)) {
-//            if (c == '+' || c == '-') {
-//                if (isdigit(peek())) {
-//                    --pos;
-//                    tokens.emplace_back(read_number());
-//                    continue;
-//                }
-//            }
+        if (is_operator(c)) {
+            if (c == '+' || c == '-') {
+                if (isdigit(peek())) {
+                    --pos;
+                    tokens.emplace_back(read_number(loc));
+                    continue;
+                }
+            }
            
-//            --pos;
-//            tokens.emplace_back(read_operator());
-//            continue;
-//        }
+            --pos;
+            tokens.emplace_back(read_operator(loc));
+            continue;
+        }
 
-//        if (isdigit(c)) {
-//            --pos;
-//            tokens.emplace_back(read_number());
-//            continue;
-//        }
+        if (isdigit(c)) {
+            --pos;
+            tokens.emplace_back(read_number(loc));
+            continue;
+        }
 
-//        if (isalpha(c) || c == '_') {
-//            if (c == 'f' && (peek() == '"' || peek() == '\'')) {
-//                tokens.emplace_back(TokenType::FString, "f", line, col);
-//                col++;
-//                continue;
-//            }
+        if (isalpha(c) || c == '_') {
+            if (c == 'f' && (peek() == '"' || peek() == '\'')) {
+                tokens.emplace_back(TokenType::FString, "f", loc);
+                loc.column++;
+                continue;
+            }
 
-//            --pos;
-//            tokens.emplace_back(read_identifier());
-//            continue;
-//        }
+            --pos;
+            tokens.emplace_back(read_identifier(loc));
+            continue;
+        }
 
-//        else {
-//            // Throw exception
-//        }
-//    }
+        else {
+            // Error
+        }
+    }
 
-//    tokens.emplace_back(TokenType::EndOfFile, "", line, col);
-// }
+    tokens.emplace_back(TokenType::EndOfFile, "", loc);
+}
 
-// #ifdef OPTIC_DEBUG
+#ifdef OPTIC_DEBUG
 
-// /* */
-// const char *to_string_token(TokenType &type) {
-//    switch (type) {
-// #define X(name) case TokenType::name: return #name;
-// #include "tokens_types.def"
-// #undef X
-//        default: return "Unknown";
-//    }
-// }
+#include <iostream>
 
-// /* */
-// void Lexer::print() {
-//    for (auto &token : tokens) {
-//        std::cout << "\nToken type: " << to_string_token(token.type) << "\n";
-//        std::cout << "Token value: '" << token.value << "'\n";
-//        std::cout << "At line: " << token.line << ", in column: " << token.column << "\n";
-//        std::cout << "In file: " << fname << "\n";
-//    }
-// }
+/* */
+const char *to_string_token(const TokenType &type) {
+    switch (type) {
+#define X(name) case TokenType::name: return #name;
+#include "tokens_types.def"
+#undef X
+        default: return "Unknown";
+    }
+}
 
-// #else
+/* */
+void Lexer::print_tokens(const std::vector<token_t> &tokens) noexcept {
+    std::cout << "----- PRINTING TOKENS -----\n\n";
 
-// // Code here
+    for (auto &token : tokens) {
+        std::cout << "Token type: " << to_string_token(token.type) << "\n";
+        std::cout << "Token value: '" << token.value << "'\n";
+        std::cout << "At line: " << token.loc.line << ", in column: " << token.loc.column << "\n";
+        std::cout << "In file: " << token.loc.file << "\n";
+    }
+}
 
-// #endif
+#else
+
+// Code here
+
+#endif
