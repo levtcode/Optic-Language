@@ -2,15 +2,7 @@
 
 #pragma once
 
-// #ifdef OPTIC_DEBUG
-
-// enum class TokenType {
-// #define X(name) name,
-// #include "tokens_types.def"
-// #undef X
-// };
-
-// #else
+#include <string>
 
 enum class TokenType {
     // Types
@@ -92,16 +84,16 @@ enum class TokenType {
     Import,         // import
     Directive,      // directive
     Macro,          // macro
+    CompileTime,    // compiletime
 
     // Keywords
     Asm,            // asm
     New,            // new
     Delete,         // delete
-    Generic,        // generic
     If,             // if
     Elif,           // elif
     Else,           // else
-    Func,           // func
+    Function,       // function
     Null,           // null
     Return,         // return
     ForLoop,        // for
@@ -117,9 +109,8 @@ enum class TokenType {
     Struct,         // struct
     Class,          // Class
     Lambda,         // lambda
-    Template,       // template
 
-    // Especial values
+    // Especial Tokens
     LiteralTrue,    // true
     LiteralFalse,   // false
     FString,        // f"{}"
@@ -127,4 +118,12 @@ enum class TokenType {
     EndOfFile       // EOF
 };
 
-// #endif
+struct token_t {
+    TokenType type;
+    std::string value;
+    unsigned line;
+    unsigned column;
+    
+    token_t(const TokenType typ, const std::string &val, const unsigned ln, const unsigned col) : 
+    type(typ), value(val), line(ln), column(col) {}
+};

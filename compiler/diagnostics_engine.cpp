@@ -1,24 +1,24 @@
 /* diagnostic_engine.cpp */
 
-#include "diagnostic_engine.hpp"
+#include "diagnostics_engine.hpp"
 
 #include <iostream>
 #include <format>
 
 /* */
-const char* Diagnostic::severity_to_string(const DiagnosticLevel level) {
+const char* Diagnostic::severity_to_string(const DiagnosticsLevel level) {
     switch (level) {
-        case DiagnosticLevel::Hint: return "Hint";
-        case DiagnosticLevel::Warning: return "Warning";
-        case DiagnosticLevel::Error: return "Error";
-        case DiagnosticLevel::FatalError: return "FatalError";
-        case DiagnosticLevel::InternalError: return "InternalError";
+        case DiagnosticsLevel::Hint: return "Hint";
+        case DiagnosticsLevel::Warning: return "Warning";
+        case DiagnosticsLevel::Error: return "Error";
+        case DiagnosticsLevel::FatalError: return "FatalError";
+        case DiagnosticsLevel::InternalError: return "InternalError";
     }
     return "Unknown";
 }
 
 /* */
-void DiagnosticEngine::print_info(const Diagnostic &diag, const SourceKind &src_kind) noexcept {
+void DiagnosticsEngine::print_info(const Diagnostic &diag, const SourceKind &src_kind) noexcept {
     if (src_kind == SourceKind::Stdin) {
         std::cerr << std::format(
             "From <stdin>:\n" \
@@ -49,7 +49,10 @@ void DiagnosticEngine::print_info(const Diagnostic &diag, const SourceKind &src_
 }
 
 /* */
-std::string DiagnosticEngine::format_msg(const std::string &msg, const std::string &buffer_view, const unsigned line, const unsigned column, const std::string &pointer) noexcept {
+std::string DiagnosticsEngine::format_msg(const std::string &msg, const std::string &buffer_view, 
+    const unsigned line, const unsigned column, const std::string &pointer
+) noexcept {
+    
     std::string padding(std::to_string(line).length(), ' ');
     std::string error_mark = std::format("{:>{}}", pointer, column);
 
@@ -68,37 +71,37 @@ std::string DiagnosticEngine::format_msg(const std::string &msg, const std::stri
 }
 
 /* */
-void DiagnosticEngine::report(
+void DiagnosticsEngine::report(
     const SourceLocation &loc,
     const std::string &message,
     const std::string &solution,
     const std::string &more_info,
-    const DiagnosticLevel lvl
+    const DiagnosticsLevel lvl
 ) {
     diagnostics.emplace_back(loc, message, solution, more_info, lvl);
 
-    if (lvl != DiagnosticLevel::Hint) {
-        if (lvl == DiagnosticLevel::Warning) warnings_num++;
+    if (lvl != DiagnosticsLevel::Hint) {
+        if (lvl == DiagnosticsLevel::Warning) warnings_num++;
         else { errors_num++; __has_errors = true; }
     }
 }
 
 /* */
-void DiagnosticEngine::show() noexcept {
+void DiagnosticsEngine::show() noexcept {
     auto &diag = diagnostics[__actual_diag];
     print_info(diag, diag.loc.source_kind);
     __actual_diag++;
 }
 
 /* */
-void DiagnosticEngine::show_all() noexcept {
+void DiagnosticsEngine::show_all() noexcept {
     for (auto &diag : diagnostics) {
         print_info(diag, diag.loc.source_kind);
     }
 }
 
 /* */
-void DiagnosticEngine::show_guide_engine_menu() noexcept {
+void DiagnosticsEngine::show_guide_engine_menu() noexcept {
     int user_option;
 
     while (true) {
@@ -149,7 +152,7 @@ void DiagnosticEngine::show_guide_engine_menu() noexcept {
 }
 
 /* */
-void DiagnosticEngine::run_guide_engine() noexcept {
+void DiagnosticsEngine::run_guide_engine() noexcept {
     // MUCH LATER: Run the guide engine in a dedicated GUI or use specific graphics to show the diagnostics.
 
     while (__actual_diag < diagnostics.size()) {

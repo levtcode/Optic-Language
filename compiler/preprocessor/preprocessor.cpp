@@ -1,5 +1,7 @@
 /* preprocessor.cpp */
 
+// TO REFACTORIZE
+
 #include "preprocessor.hpp"
 
 #include <iostream>
@@ -201,7 +203,7 @@ std::string Preprocessor::read_keyword(const std::vector<uint8_t> &buffer, size_
 void Preprocessor::include_module(const Module &mod, std::vector<uint8_t> &buffer, size_t &cursor, SourceLocation &loc) {
 	while (cursor < buffer.size() && isspace(buffer[cursor]) && buffer[cursor] != '\n') cursor++;
 	std::string dep_name = get_module_name(buffer, cursor, loc);
-	preprocessor_context.graph->add_dependency(mod.module_name, dep_name);
+	preprocessor_context.graph->add_dependency(mod.get_name(), dep_name);
 }
 
 /* */
@@ -237,7 +239,7 @@ PreprocessedModule Preprocessor::analyze(const std::string &mod_name, std::vecto
 						"Error: Block comment not closed.",
 						"Solution: Append '*/' to the end of the block comment.\n",
 						"",
-						DiagnosticLevel::FatalError
+						DiagnosticsLevel::FatalError
 					);
 					module.error_flag = true;
 					return module;

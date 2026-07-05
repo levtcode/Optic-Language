@@ -5,7 +5,7 @@
 #include "compiler_instance.hpp"
 #include <string>
 
-ArgValue get_arg_value(const std::string&, int, bool*, DiagnosticEngine&);
+ArgValue get_arg_value(const std::string&, int, bool*, DiagnosticsEngine&);
 std::string get_option_name(const std::string&, size_t*);
 
 void process_arg(const std::string&, CompilerInstance&);

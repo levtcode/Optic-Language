@@ -5,43 +5,48 @@
 TrieNode *root = new TrieNode();
 
 /* */
-void TrieNode::insert(const std::string &op) {
-    TrieNode *curr = root;
-
-    for (char c : op) {
-        if (curr->children[c] == nullptr) {
-            TrieNode *new_node = new TrieNode();
-            curr->children[c] = new_node;
+void TrieNode::insert(const std::string &operator_) noexcept {
+    TrieNode *current = root;
+    
+    for (auto op : operator_) {
+        if (!current->nodes.contains(op)) {
+            current->nodes[op] = new TrieNode();
         }
-
-        curr = curr->children[c];
-        
+        current = current->nodes[op];
     }
 
-    curr->is_final = true;
+    current->is_end_of_op = true;
 }
 
 /* */
-bool TrieNode::search(const std::string &op) {
-    if (root == nullptr) {
-        return false;
+bool TrieNode::search(const std::string &operator_) noexcept {
+    TrieNode *current = root;
+
+    for (auto op : operator_) {
+        if (!current->nodes.contains(op)) { return false; }
+        current = current->nodes[op];
     }
 
-    TrieNode *curr = root;
-    for (char c : op) {
-        if (curr->children[c] == nullptr) {
-            return false;
-        }
-
-        curr = curr->children[c];
-    }
-
-    return true;
+    return current->is_end_of_op;
 }
 
-void init(const std::unordered_map<std::string_view, TokenType> &table) {
+/* */
+void TrieNode::init(const std::unordered_map<std::string_view, TokenType> &table) noexcept {
     for (auto it = table.begin(); it != table.end(); it++) {
-        std::string op(it->first);
-        root->insert(op);
+        root->insert(std::string(it->first));
     }
+}
+
+/* */
+void recursive_destroy(TrieNode *node) noexcept {
+    for (auto &[_, child] : node->nodes) {
+        recursive_destroy(child);
+    }
+
+    delete node;
+}
+
+/* */
+void TrieNode::destroy() noexcept {
+    recursive_destroy(root);
 }

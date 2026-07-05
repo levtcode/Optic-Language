@@ -7,19 +7,13 @@
 #include <unordered_map>
 #include <string>
 
+/* */
 struct TrieNode {
-    bool is_final = false;
-    std::unordered_map<char, TrieNode*> children;
+    std::unordered_map<char, TrieNode*> nodes;
+    bool is_end_of_op = false;
 
-    ~TrieNode() {
-        for (auto& [_, node] : children) {
-            delete node;
-        }
-    }
-
-    void insert(const std::string&);
-    bool search(const std::string&);
+    void insert(const std::string &op) noexcept;
+    static void init(const std::unordered_map<std::string_view, TokenType>&) noexcept;
+    static void destroy() noexcept;
+    static bool search(const std::string &op) noexcept;
 };
-
-extern TrieNode *root;
-void init(const std::unordered_map<std::string_view, TokenType>&);

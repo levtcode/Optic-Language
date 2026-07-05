@@ -1,28 +1,16 @@
 /* preprocessor.hpp */
 
+// TO REFACTORIZE
+
 #pragma once
-#include "diagnostic_engine.hpp"
+#include "diagnostics_engine.hpp"
+#include "../module.hpp"
 
 #include <cstddef>
-#include <filesystem>
+#include <cstdint>
 #include <map>
 #include <vector>
 #include <unordered_map>
-
-/* */
-struct Module {
-    std::string module_name;
-    std::filesystem::path module_path;
-
-    Module() = default;
-    Module(const std::string &fname) : module_path(fname) {
-        module_name = module_path.filename().string();
-        size_t ext = module_name.find_last_of('.');
-
-        if (ext != std::string::npos)
-            module_name.erase(ext);
-    }
-};
 
 /* */
 struct PreprocessedModule {
@@ -78,10 +66,10 @@ public:
 
 /* */
 struct PreprocessorContext {
-    DiagnosticEngine *diagnostic_engine;
+    DiagnosticsEngine *diagnostic_engine;
     DependencyGraph *graph;
 
-    PreprocessorContext(DiagnosticEngine *diag_engine, DependencyGraph *g) : diagnostic_engine(diag_engine), graph(g) {}
+    PreprocessorContext(DiagnosticsEngine *diag_engine, DependencyGraph *g) : diagnostic_engine(diag_engine), graph(g) {}
 };
 
 /* */

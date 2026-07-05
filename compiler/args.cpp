@@ -65,7 +65,7 @@ void print_args(CompilerArgs &args) {
 #endif
 
 /* */
-ArgValue get_arg_value(const std::string &raw, int index, bool *invalid, DiagnosticEngine &diagnostic_engine) {
+ArgValue get_arg_value(const std::string &raw, int index, bool *invalid, DiagnosticsEngine &diagnostic_engine) {
     std::string value = raw.substr(index + 1);
 
     if (value == "true" || value == "false") return value == "true";
@@ -85,7 +85,7 @@ ArgValue get_arg_value(const std::string &raw, int index, bool *invalid, Diagnos
         std::format("Error: Invalid argument type: {}\n", value),
         "Solution: Use a valid argument value. Valid types: [int: 42, float: 3.1416, bool: true, string: '<text>']\n",
         "",
-        DiagnosticLevel::Error
+        DiagnosticsLevel::Error
     );
     *invalid = true;
     return "";
@@ -104,17 +104,17 @@ void process_arg(const std::string &arg, CompilerInstance &compiler_instance) {
     size_t index;
     std::string option_name = get_option_name(arg, &index);
 
-    if (compiler_instance.compiler_args.options.contains(option_name)) {
+    if (compiler_instance.get_compiler_args().options.contains(option_name)) {
         bool is_invalid = false;
-        ArgValue value = get_arg_value(arg, index, &is_invalid, compiler_instance.diagnostic_engine);
+        ArgValue value = get_arg_value(arg, index, &is_invalid, compiler_instance.get_diagnostic_engine());
 
         if (is_invalid) return;
 
-        compiler_instance.compiler_args.options[option_name] = value;
+        compiler_instance.get_compiler_args().options[option_name] = value;
     }
 
-    else if (compiler_instance.compiler_args.flags.contains(option_name)) {
-        compiler_instance.compiler_args.flags[option_name] = !compiler_instance.compiler_args.flags.at(option_name);
+    else if (compiler_instance.get_compiler_args().flags.contains(option_name)) {
+        compiler_instance.get_compiler_args().flags[option_name] = !compiler_instance.get_compiler_args().flags.at(option_name);
     }
 
     else if (option_name == "--help") {
@@ -122,14 +122,14 @@ void process_arg(const std::string &arg, CompilerInstance &compiler_instance) {
     }
 
     else {
-        compiler_instance.compiler_args.files.push_back(option_name);
+        compiler_instance.get_compiler_args().files.push_back(option_name);
     }
 }
 
 /* get_args: reads arguments from the command line and try to parse them to the compiler args */
 void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
     if (argc < 2) {
-        compiler_instance.diagnostic_engine.report(
+        compiler_instance.get_diagnostic_engine().report(
             loc,
             "Error: Not enough arguments provided in the command line\n",
             "Solution: Provide a least 2 arguments. For example:\n\t> optic ./file1.optic\n\n",
@@ -137,8 +137,8 @@ void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
             "More information: Optic compiler (OpticLang) needs to process a least 2 arguments. The first " \
             "argument is the absolute path to the running program (optic -> /usr/bin/optic). The second " \
             "argument is the relative or absolute path to the Optic file; in our example './file.optic'.\n" \
-            "Note: This rule applies to practically all compilers (clang, gcc, rustc...)\n\n",
-            DiagnosticLevel::FatalError
+            "Note: This rule applies to practically all compilers (Clang, GCC, rustc...)\n\n",
+            DiagnosticsLevel::FatalError
         );
         // call_usage ...
         compiler_instance.stop();
@@ -151,7 +151,7 @@ void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
     }
 
 #ifdef OPTIC_DEBUG
-    print_args(compiler_instance.compiler_args);
+    print_args(compiler_instance.get_compiler_args());
 #endif
 }
 
@@ -166,7 +166,7 @@ void call_usage(bool help_manual) {
 
 /* */
 void apply_configs(CompilerInstance &compiler_instance) {
-    if (compiler_instance.compiler_args.flags["-Wall"]) {
+    if (compiler_instance.get_compiler_args().flags["-Wall"]) {
         // TODO
     }
 }

@@ -9,7 +9,7 @@
 #include <vector>
 
 /* */
-enum class DiagnosticLevel {
+enum class DiagnosticsLevel {
     Hint,
     Warning,
     Error,
@@ -26,7 +26,7 @@ enum class SourceKind {
 
 /* */
 struct SourceLocation {
-    SourceKind source_kind = SourceKind::BufferAST;
+    SourceKind source_kind = SourceKind::BufferNoAST;
     std::string file;
     std::string function_name;
     unsigned line = 1;
@@ -40,15 +40,11 @@ struct SourceLocation {
 
 /* */
 class SourceLocationRange {
-    SourceLocation begin_;
-    SourceLocation end_;
-
-public:
-    SourceLocationRange(const SourceLocation &begin, const SourceLocation &end) : begin_(begin), end_(end) {}
+    // TODO
 };
 
 /* */
-struct DiagnosticConfig {
+struct DiagnosticsConfig {
     bool color_diagnostics = true;
     bool guide_engine = false;
     bool all_warnings = false;
@@ -61,44 +57,43 @@ struct Diagnostic {
     const std::string msg;
     const std::string solution;
     const std::string more_info;
-    const DiagnosticLevel level;
+    const DiagnosticsLevel level;
 
     Diagnostic(const SourceLocation &location,
         const std::string &message,
         const std::string &sol,
         const std::string &info,
-        const DiagnosticLevel lvl
+        const DiagnosticsLevel lvl
     ) : loc(location), msg(message), solution(sol), more_info(info), level(lvl) {}
 
-    [[nodiscard]] static const char *severity_to_string(const DiagnosticLevel);
+    [[nodiscard]] static const char *severity_to_string(const DiagnosticsLevel);
 };
 
 /* */
-class DiagnosticEngine {
+class DiagnosticsEngine {
+private:
     unsigned warnings_num = 0;
     unsigned errors_num = 0;
     unsigned __actual_diag = 0;
     bool __has_errors = false;
 
-    DiagnosticConfig config;
+    DiagnosticsConfig config;
     std::vector<Diagnostic> diagnostics;
 
     void print_info(const Diagnostic&, const SourceKind&) noexcept;
     void show_guide_engine_menu() noexcept;
 
 public:
-    void report(const SourceLocation&, const std::string &msg, const std::string &sol, const std::string &info, const DiagnosticLevel);
+    void report(const SourceLocation&, const std::string &msg, const std::string &sol, const std::string &info, const DiagnosticsLevel);
     void show() noexcept;
     void show_all() noexcept;
     void run_guide_engine() noexcept;
-
-    [[noreturn]] void compiler_stop(bool=false) noexcept;
 
     inline int warnings_count() const noexcept { return warnings_num; }
     inline int error_count() const noexcept { return errors_num; }
     inline bool has_errors() const noexcept { return __has_errors; }
 
-    DiagnosticConfig get_config() const noexcept { return config; }
+    DiagnosticsConfig get_config() const noexcept { return config; }
     std::string format_msg(const std::string &msg, const std::string &buffer_view, const unsigned ln, const unsigned col, const std::string &pointer) noexcept;
     // more methods
 };
