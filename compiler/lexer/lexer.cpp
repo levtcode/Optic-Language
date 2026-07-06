@@ -194,18 +194,12 @@ void Lexer::ignore_comment() noexcept {
 
     if (c == '*') {
         while ((c = get()) != EOF) {
-            if (c == '\n') {
-                module->loc().column = 1;
-                continue;
-            }
-
             if (c == '*') {
                 if (peek() == '/') {
                     get();
-                    module->loc().column += 2;
                     return;
                 }
-            }            
+            }
         }
 
         diagnostic_engine->report(

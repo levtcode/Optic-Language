@@ -14,6 +14,51 @@ It acts as a high-level abstraction layer over C/C++, providing direct hardware 
 - **Granular Memory Control:** Features built-in memory management and a Garbage Collector (GC) that can be controlled either explicitly within the source code or via the Command Line Interface (CLI).
 - **Low-Level Hardware Access:** Facilitates systems programming through clear abstractions and classes designed to manipulate physical hardware directly, eliminating heavy software overhead.
 
+## Syntax Example
+
+### 1. Hello World
+
+```optic
+function main() {
+    print("Hello World")
+}
+```
+
+### 2. Fibonacci Series
+
+```optic
+function fibonacci(n: int) -> int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+```
+
+### 3. Binary Search
+
+```optic
+function binary_search(&arr: array[int], x: int) -> int {
+    int low = 0
+    int high = arr.size() - 1
+
+    while (low <= high) {
+        mid = low + (high - low) / 2
+
+        if arr[mid] == x:
+            return mid
+
+        if arr[mid] < x:
+            low = mid + 1
+
+        else:
+            high = mid - 1
+    }
+
+    return -1
+}
+```
+
 ## Future Roadmap
 
 The Optic ecosystem is planned to expand into cutting-edge fields through specialized language extensions:
@@ -21,6 +66,5 @@ The Optic ecosystem is planned to expand into cutting-edge fields through specia
 - **GOptic:** A powerful graphics framework optimized for high-performance rendering and visual computing.
 
 ## README: Not completed yet
-
 
 Optic is an open-source code programming language in an early stage of development that is being designed by an inexperienced 17 years old programmer.
