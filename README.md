@@ -28,7 +28,7 @@ These goals represent the direction of the project rather than fully implemented
 
 ### Hello World:
 
-```optic
+```c++
 function main() {
     print("Hello World")
 }
@@ -36,7 +36,7 @@ function main() {
 
 ### Fibonacci:
 
-```optic
+```c++
 function fibonacci(n: int) -> int {
     if n <= 1 {
         return n
@@ -48,7 +48,7 @@ function fibonacci(n: int) -> int {
 
 ### Binary Search:
 
-```optic
+```c++
 function binary_search(&arr: array[int], x: int) -> int {
     int low = 0
     int high = arr.size() - 1
