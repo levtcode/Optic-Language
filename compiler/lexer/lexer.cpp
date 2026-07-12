@@ -13,12 +13,7 @@ inline bool is_numeric(int c) noexcept {
             (c == 'e') || (c == 'E'));
 }
 
-bool is_prefix_of_operator(const std::string &s) noexcept {
-    for (const auto &[op, _] : operator_table) {
-        if (op.starts_with(s)) return true;
-    }
-    return false;
-}
+
 
 inline bool Lexer::is_symbol(const int c) const noexcept {
     return ((c == '(') || (c == ')') ||
@@ -176,16 +171,25 @@ token_t Lexer::read_number() noexcept { // Refactorize: Verifiy if output is a v
 
 /* */
 token_t Lexer::read_operator() noexcept {
-    std::string op;
+    int c;
     size_t _start_col = module->loc().column;
-    int c = get();
 
-    do {
-        op += c;
-    } while ((c = get()) != EOF && TrieNode::search(op));
+    std::string current;
+    std::string longest_match;
+
+    while ((c = get()) != EOF) {
+        current += c;
+
+        if (!TrieNode::is_prefix(current, operator_table))
+            break;
+
+        if (TrieNode::search(current))
+            longest_match = current;
+    }
+
     if (c != EOF) --pos;
 
-    return token_t(operator_table.at(op), op, module->loc().line, _start_col);
+    return token_t(operator_table.at(longest_match), longest_match, module->loc().line, _start_col); // Make trim to delete right spaces
 }
 
 /* */

@@ -16,4 +16,5 @@ struct TrieNode {
     static void init(const std::unordered_map<std::string_view, TokenType>&) noexcept;
     static void destroy() noexcept;
     static bool search(const std::string &op) noexcept;
+    static bool is_prefix(const std::string &op, const std::unordered_map<std::string_view, TokenType>&) noexcept;
 };
