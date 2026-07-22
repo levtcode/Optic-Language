@@ -38,9 +38,8 @@ function main() {
 
 ```c++
 function fibonacci(n: int) -> int {
-    if n <= 1 {
-        return n
-    }
+    if n <= 1:
+        return n;
 
     return fibonacci(n - 1) + fibonacci(n - 2)
 }
@@ -56,9 +55,8 @@ function binary_search(&arr: array[int], x: int) -> int {
     while (low <= high) {
         int mid = low + (high - low) / 2
 
-        if arr[mid] == x {
+        if arr[mid] == x:
             return mid
-        }
 
         if arr[mid] < x {
             low = mid + 1
@@ -96,6 +94,7 @@ Optic is currently in the **pre-alpha** stage.
 - Standard library
 - Native code generation
 - C/C++ interoperability layer
+- Integration with Cargo
 
 ---
 

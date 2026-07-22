@@ -1,6 +1,6 @@
 /* lexer.cpp */
 
-// TODO: Implement a function that reads multiline strings
+// MUCH LATER (after parser): Implement a function that reads multiline strings
 
 #include "lexer.hpp"
 #include "tables.hpp"
@@ -78,7 +78,7 @@ void Lexer::read_hexadecimal_escape(std::string &str) noexcept {
    str += n;
 }
 
-// TODO:
+// MUCH LATER: Read unicode escapes
 // /* */
 // void Lexer::read_unicode_escape(std::string &str, int bytes) noexcept {
 //     return;
@@ -152,24 +152,81 @@ token_t Lexer::read_string() noexcept {
     return token_t(TokenType::String, str, module->loc().line, _start_col);
 }
 
-/* */
-token_t Lexer::read_number() noexcept { // Refactorize: Verifiy if output is a valid number
+
+/*
+ * Reads a numeric literal (integer or float) from the input stream.
+ * Handles decimal points and scientific notation (e/E) with backtracking
+ * for invalid exponents.
+ *
+ * @return token_t representing either TokenType::Float or TokenType::Int.
+ */
+token_t Lexer::read_number() noexcept {
     std::string number;
-    size_t _start_col = module->loc().column;
+    size_t _start_col = (module->loc().column > 0) ? (module->loc().column - 1) : 0;
+    bool has_dot = false;
+    bool has_exponent = false;
+    bool is_float = false;
+
     int c = get();
-    bool flag = false;
+    if (c == EOF) {
+        return token_t(TokenType::Int, "", module->loc().line, _start_col);
+    }
 
     number += c;
-    while ((c = get()) != EOF && is_numeric(c)) {
-        if (c == '.' || c == 'e' || c == 'E') flag = true;
-        number += c;
-    }
-    if (c != EOF) --pos;
 
-    return token_t((flag) ? TokenType::Float : TokenType::Int, number, module->loc().line, _start_col);
+    while (true) {
+        int next = peek();
+
+        if (isdigit(next)) {
+            number += static_cast<char>(get());
+            continue;
+        }
+
+        if (!has_dot && !has_exponent && next == '.') {
+            has_dot = true;
+            is_float = true;
+            number += static_cast<char>(get());
+            continue;
+        }
+
+        if (!has_exponent && (next == 'e' || next == 'E')) {
+            size_t exponent_pos = pos;
+            unsigned consumed_chars = 1;
+            int exponent_char = get();
+            number += static_cast<char>(exponent_char);
+
+            int exponent_next = peek();
+            if (exponent_next == '+' || exponent_next == '-') {
+                consumed_chars++;
+                exponent_next = get();
+                number += static_cast<char>(exponent_next);
+            }
+
+            if (!isdigit(peek())) {
+                pos = exponent_pos;
+                module->loc().column -= consumed_chars;
+                break;
+            }
+
+            has_exponent = true;
+            is_float = true;
+            continue;
+        }
+
+        break;
+    }
+
+    return token_t(is_float ? TokenType::Float : TokenType::Int, number, module->loc().line, _start_col);
 }
 
-/* */
+
+/**
+ * Reads the longest valid operator starting at the current position.
+ *
+ * The lexer traverses the operator trie while the current sequence
+ * remains a valid prefix. The last complete operator found is returned,
+ * implementing the longest-match rule.
+ */
 token_t Lexer::read_operator() noexcept {
     int c;
     size_t _start_col = module->loc().column;
@@ -189,7 +246,7 @@ token_t Lexer::read_operator() noexcept {
 
     if (c != EOF) --pos;
 
-    return token_t(operator_table.at(longest_match), longest_match, module->loc().line, _start_col); // Make trim to delete right spaces
+    return token_t(operator_table.at(longest_match), longest_match, module->loc().line, _start_col);
 }
 
 /* */
@@ -271,6 +328,7 @@ void Lexer::tokenize(std::vector<token_t> &tokens) noexcept {
         }
 
         if (isdigit(c)) {
+            --pos;
             tokens.emplace_back(read_number());
             continue;
         }
