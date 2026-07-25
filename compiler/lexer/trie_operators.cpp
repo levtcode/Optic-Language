@@ -30,6 +30,7 @@ bool TrieNode::search(const std::string &operator_) noexcept {
     return current->is_end_of_op;
 }
 
+/* */
 bool TrieNode::is_prefix(const std::string &s, const std::unordered_map<std::string_view, TokenType> &operator_table) noexcept {
     for (const auto &[op, _] : operator_table) {
         if (op.starts_with(s)) return true;

@@ -1,6 +1,16 @@
-/* lexer.cpp */
-
-// MUCH LATER (after parser): Implement a function that reads multiline strings
+/**
+ * @file lexer.cpp
+ * @brief Implementation of Optic's lexical analyzer.
+ *
+ * The lexer performs the first stage of the frontend, transforming the source
+ * code into a stream of tokens while preserving source locations for accurate
+ * diagnostics. Token recognition is delegated to specialized readers for each
+ * lexical category (identifiers, literals, operators, comments, etc.).
+ *
+ * @todo Multiline string literals.
+ * @todo Unicode escape sequences.
+ * @todo Fill the '// Error' lines
+ */
 
 #include "lexer.hpp"
 #include "tables.hpp"
@@ -12,8 +22,6 @@ inline bool is_numeric(int c) noexcept {
     return (isdigit(c) || (c == '.') || 
             (c == 'e') || (c == 'E'));
 }
-
-
 
 inline bool Lexer::is_symbol(const int c) const noexcept {
     return ((c == '(') || (c == ')') ||
@@ -44,7 +52,16 @@ char Lexer::read_escape(int c) const noexcept {
     }
 }
 
-/* */
+
+/**
+ * @brief Decodes an octal escape sequence.
+ *
+ * Assumes the lexer is positioned at the first octal digit immediately after
+ * the backslash. Consumes the complete sequence, converts it to its byte value
+ * and appends the decoded character to the destination string.
+ *
+ * @param str Destination string receiving the decoded character.
+ */
 void Lexer::read_octal_escape(std::string &str) noexcept {
     std::string tmp_buf;
     int n, c = get();
@@ -61,7 +78,15 @@ void Lexer::read_octal_escape(std::string &str) noexcept {
     str += n;
 }
 
-/* */
+/**
+ * @brief Decodes a hexadecimal escape sequence.
+ *
+ * Assumes the lexer has already consumed the '\x' introducer and is positioned
+ * at the first hexadecimal digit. The resulting byte is appended to the output
+ * string.
+ *
+ * @param str Destination string receiving the decoded character.
+ */
 void Lexer::read_hexadecimal_escape(std::string &str) noexcept {
     std::string tmp_buf;
     short int n, c = get();
@@ -78,13 +103,14 @@ void Lexer::read_hexadecimal_escape(std::string &str) noexcept {
    str += n;
 }
 
-// MUCH LATER: Read unicode escapes
-// /* */
-// void Lexer::read_unicode_escape(std::string &str, int bytes) noexcept {
-//     return;
-// }
 
-/* */
+/**
+ * @brief Reads an identifier or reserved keyword.
+ *
+ * Consumes an identifier according to Optic's lexical grammar and performs a
+ * keyword lookup before producing the final token. Reserved words are emitted
+ * using their dedicated token types; otherwise an Identifier token is returned.
+ */
 token_t Lexer::read_identifier() noexcept {
     std::string word;
     size_t _start_col = module->loc().column;
@@ -100,7 +126,18 @@ token_t Lexer::read_identifier() noexcept {
     return token_t(TokenType::Identifier, word, module->loc().line, _start_col);
 }
 
-/* */
+
+/**
+ * @brief Reads a quoted string literal.
+ *
+ * Supports standard escape sequences together with octal and hexadecimal
+ * escapes. If the closing quote is not found before reaching EOF, a diagnostic
+ * is emitted and tokenization continues.
+ *
+ * @note Future extensions:
+ *       - Unicode escapes.
+ *       - Multiline strings.
+ */
 token_t Lexer::read_string() noexcept {
     std::string str;
     size_t _start_col = module->loc().column;
@@ -153,12 +190,12 @@ token_t Lexer::read_string() noexcept {
 }
 
 
-/*
- * Reads a numeric literal (integer or float) from the input stream.
- * Handles decimal points and scientific notation (e/E) with backtracking
- * for invalid exponents.
+/**
+ * @brief Reads a numeric literal.
  *
- * @return token_t representing either TokenType::Float or TokenType::Int.
+ * Supports integer literals, decimal floating-point literals and scientific
+ * notation. Invalid exponent suffixes are rolled back so the numeric token
+ * ends before the malformed exponent.
  */
 token_t Lexer::read_number() noexcept {
     std::string number;
@@ -221,11 +258,10 @@ token_t Lexer::read_number() noexcept {
 
 
 /**
- * Reads the longest valid operator starting at the current position.
+ * @brief Reads the longest valid operator beginning at the current position.
  *
- * The lexer traverses the operator trie while the current sequence
- * remains a valid prefix. The last complete operator found is returned,
- * implementing the longest-match rule.
+ * Operators are recognized using a trie, allowing the lexer to efficiently
+ * implement the longest-match rule (e.g. ">>=" is preferred over ">>" or ">").
  */
 token_t Lexer::read_operator() noexcept {
     int c;
@@ -249,7 +285,12 @@ token_t Lexer::read_operator() noexcept {
     return token_t(operator_table.at(longest_match), longest_match, module->loc().line, _start_col);
 }
 
-/* */
+/**
+ * @brief Consumes a source code comment.
+ *
+ * Supports both single-line and block comments.
+ * Unterminated block comments produce a diagnostic before reaching EOF.
+ */
 void Lexer::ignore_comment() noexcept {
     int c = get();
 
@@ -277,7 +318,16 @@ void Lexer::ignore_comment() noexcept {
     }
 }
 
-/* */
+
+/**
+ * @brief Performs lexical analysis over the entire source module.
+ *
+ * Repeatedly dispatches to specialized token readers, skips whitespace and
+ * comments, emits lexical diagnostics when necessary and appends an explicit
+ * EndOfFile token to terminate the token stream.
+ *
+ * @note This function constitutes the main entry point of the lexer.
+ */
 void Lexer::tokenize(std::vector<token_t> &tokens) noexcept {
     TrieNode::init(operator_table);
     int c;
@@ -357,7 +407,12 @@ void Lexer::tokenize(std::vector<token_t> &tokens) noexcept {
 
 #include <iostream>
 
-/* */
+/**
+ * Converts a TokenType enum value to its corresponding string representation for debugging.
+ *
+ * @param type The TokenType enum value.
+ * @return C-string representing the identifier of the token type.
+ */
 const char *to_string_token(const TokenType type) {
     switch (type) {
 #define X(name) case TokenType::name: return #name;
@@ -367,7 +422,6 @@ const char *to_string_token(const TokenType type) {
     }
 }
 
-/* */
 void Lexer::print_tokens(Module &module) noexcept {
     for (auto &token : module.get_tokens()) {
         std::cout << "Token type: " << to_string_token(token.type) << "\n";

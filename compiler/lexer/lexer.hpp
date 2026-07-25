@@ -1,4 +1,15 @@
-/* lexer.hpp */
+/** 
+ * @file lexer.hpp
+ *
+ * @brief Declaration of Optic's lexical analyzer.
+ *
+ * The lexer is responsible for transforming a source module into a sequence of
+ * lexical tokens while preserving source locations for diagnostics.
+ *
+ * Token recognition is delegated to specialized readers for each lexical
+ * category (identifiers, literals, operators, comments, etc.). The resulting
+ * token stream is later consumed by the parser.
+ */
 
 #pragma once
 
@@ -9,13 +20,15 @@
 #include <vector>
 #include <string>
 
-/* */
 class Lexer {
 private:
     Module *module;
     DiagnosticsEngine *diagnostic_engine;
+
+    /// Current position within the module's source buffer.
     size_t pos = 0;
 
+    /// Consumes the current character, advances the cursor and updates the current location.
     inline int get() noexcept {
         int c = (pos < module->get_buffer().size()) ? module->get_buffer()[pos++] : EOF;
 
@@ -29,6 +42,7 @@ private:
         return c;
     }
 
+    /// Returns the next char whitout consuming it.
     inline int peek() const noexcept {
         return (pos < module->get_buffer().size()) ? module->get_buffer()[pos] : EOF;
     }
@@ -49,8 +63,11 @@ public:
     void read_octal_escape(std::string&) noexcept;
     void read_hexadecimal_escape(std::string&) noexcept;
     void read_unicode_escape(std::string&, const int) noexcept;
+
     void ignore_comment() noexcept;
 
+    /// Main lexer entry point. Performs lexical analysis over the source module 
+    /// and generates the complete token stream.
     void tokenize(std::vector<token_t> &tokens) noexcept;
 #ifdef OPTIC_DEBUG
     void print_tokens(Module&) noexcept;
