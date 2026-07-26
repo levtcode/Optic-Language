@@ -1,7 +1,8 @@
 /* optic.cpp */
 
-#include <iostream>
+#include "./core/core.hpp"
 
 int main(int argc, char *argv[]) {
-    // TODO
+    OpticCore optic_core;
+    return optic_core.run(argc, argv);
 }

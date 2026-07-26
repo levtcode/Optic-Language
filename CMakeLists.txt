@@ -22,10 +22,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB_RECURSE OPTIC_COMPILER_SOURCES
     compiler/*.cpp
+    core/*.cpp
+    optic.cpp
 )
 
 file(GLOB_RECURSE OPTIC_COMPILER_HEADERS
     compiler/*.hpp
+    core/*.hpp
 )
 
 add_executable(optic
