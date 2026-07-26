@@ -98,6 +98,49 @@ Optic is currently in the **pre-alpha** stage.
 
 ---
 
+## Repository Structure
+
+```mermaid
+flowchart TD
+
+    A["optic.cpp<br/>(Entry Point)"]
+
+    B["Core<br/>Command Manager"]
+
+    C["CLI Arguments<br/>args.cpp"]
+
+    D["Compiler"]
+
+    E["Runtime"]
+
+    F["Optic Library<br/>opticlib"]
+
+    G["Cargo"]
+
+    H["Tests & Benchmarks"]
+
+    A --> B
+
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+    B --> G
+    B --> H
+
+    D --> D1["Driver"]
+    D --> D2["Lexer"]
+    D --> D3["Preprocessor"]
+    D --> D4["Parser"]
+    D --> D5["Semantic Analysis"]
+    D --> D6["Intermediate Representation"]
+    D --> D7["Optimizer"]
+    D --> D8["Code Generation"]
+    D --> D9["Linker"]
+```
+
+---
+
 ## Roadmap
 
 The long-term roadmap currently includes:
@@ -128,17 +171,6 @@ Instead, it serves as a platform for exploring:
 - Software architecture
 
 Building the project in public allows ideas, mistakes, and improvements to be documented throughout the process.
-
----
-
-## Repository Structure (At the moment)
-
-```txt
-compiler/
-    /lexer
-    /preprocessor
-    /driver
-```
 
 ---
 
