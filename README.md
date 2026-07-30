@@ -107,7 +107,7 @@ flowchart TD
 
     B["Core<br/>Command Manager"]
 
-    C["CLI Arguments<br/>args.cpp"]
+    C["CLI Arguments"]
 
     D["Compiler"]
 
