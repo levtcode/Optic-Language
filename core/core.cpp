@@ -1,7 +1,7 @@
 /* core.cpp */
 
 #include "core.hpp"
-#include "command_manager.hpp"
+#include "command_dispatcher.hpp"
 
 #include <cstdlib>
 
@@ -12,11 +12,10 @@ void OpticCore::init_compiler() {
 
 /* */
 int OpticCore::run(int argc, char *argv[]) {
-    if (argc < 2) {
-        optic_cli::display_help(true);
+    OpticCLI optic_cli(argc, argv);
+    if (optic_cli.bad_()) {
         return EXIT_FAILURE;
     }
-
     
     return EXIT_SUCCESS;
 }
