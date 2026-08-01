@@ -1,4 +1,4 @@
-/* command_manager.hpp */
+/* command_dispatcher.hpp */
 
 #pragma once
 

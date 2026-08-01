@@ -1,4 +1,4 @@
-/* command_manager.cpp */
+/* command_dispatcher.cpp */
 
 #include "command_dispatcher.hpp"
 
