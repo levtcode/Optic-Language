@@ -17,7 +17,7 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
     FILE *f = fopen(fname.c_str(), "rb");
 
     if (!f) {
-        diagnostic_engine.report(
+        diagnostic_engine.report( 
             srcloc,
             std::format("Error: Cant open file '{}'. File does not exists.\n", fname),
             "Solution: Check if the file exists on your system path, if doesnt, create the file yourself.\n",
@@ -50,19 +50,6 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
 
     fclose(f);
     return true;
-}
-
-/* */
-[[nodiscard]]
-int CompilerInstance::run(int argc, char *argv[]) noexcept {
-    get_args(argc, argv, *this);
-    lexing();
-    preprocess();
-
-    // More phases soon...
-
-    diagnostic_engine.get_config().guide_engine ? diagnostic_engine.run_guide_engine() : diagnostic_engine.show_all();
-    return (diagnostic_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 /* */
@@ -106,10 +93,23 @@ void CompilerInstance::lexing() noexcept {
 
         Lexer lexer(&module, &diagnostic_engine);
         lexer.tokenize(module.get_tokens());
-        
+
     #ifdef OPTIC_DEBUG
         lexer.print_tokens(module);
     #endif
         modules.push_back(std::move(module));
     }
+}
+
+/* */
+[[nodiscard]]
+int CompilerInstance::run(int argc, char *argv[]) noexcept {
+    get_args(argc, argv, *this);
+    lexing();
+    preprocess();
+
+    // More phases soon...
+
+    diagnostic_engine.get_config().guide_engine ? diagnostic_engine.run_guide_engine() : diagnostic_engine.show_all();
+    return (diagnostic_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
