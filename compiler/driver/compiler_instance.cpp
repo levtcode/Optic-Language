@@ -17,7 +17,7 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
     FILE *f = fopen(fname.c_str(), "rb");
 
     if (!f) {
-        diagnostic_engine.report( 
+        diagnostic_engine.report(
             srcloc,
             std::format("Error: Cant open file '{}'. File does not exists.\n", fname),
             "Solution: Check if the file exists on your system path, if doesnt, create the file yourself.\n",

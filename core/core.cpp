@@ -9,8 +9,12 @@
 
 /* */
 int OpticCore::dispatch_command(Command command, int argc, char **argv) {
+    if (command == Command::Help) {
+        call_usage();
+        return EXIT_SUCCESS;
+    }
+
     constexpr std::array<command_handler, static_cast<size_t>(Command::Count)> HANDLERS = {
-        help_,
         test_,
         install_,
         uninstall_,

@@ -47,8 +47,6 @@
 
 # Testing & debugging
 /tests/
-test.cpp
-test.c
 
 # Visual Studio & VS Code task files
 /.vscode/
