@@ -15,6 +15,7 @@ int OpticCore::dispatch_command(Command command, int argc, char **argv) {
     }
 
     constexpr std::array<command_handler, static_cast<size_t>(Command::Count)> HANDLERS = {
+        nullptr,
         test_,
         install_,
         uninstall_,

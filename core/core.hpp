@@ -3,6 +3,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <string_view>
 
 /* */
 class OpticCore {
@@ -19,13 +20,14 @@ public:
     };
 
 private:
-    std::unordered_map<const char *, Command> command_table {
+    std::unordered_map<std::string_view, Command> command_table {
         {"help",      Command::Help},
         {"test",      Command::Test},
         {"install",   Command::Install},
         {"uninstall", Command::Uninstall},
         {"build",     Command::Build},
-        {"run",       Command::Run}
+        {"run",       Command::Run},
+        {"debug",     Command::Debug}
     };
 
     Command get_command(const char *current_arg);
