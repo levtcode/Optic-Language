@@ -1,11 +1,40 @@
 /* core.cpp */
 
 #include "core.hpp"
+#include "../compiler/driver/compiler_instance.hpp"
 #include "../compiler/driver/args.hpp"
-#include "commands/source.hpp"
 
 #include <cstdlib>
-#include <array>
+
+/* */
+int exec_compiler(int argc, char **argv, CompilerMode mode) {
+    // TODO
+    CompilerInstance compiler;
+
+    if (compiler.run(argc, argv, mode)) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+/* */
+int install_lib() {
+    // TODO
+    return -1;
+}
+
+/* */
+int uninstall_lib() {
+    // TODO
+    return -1;
+}
+
+/* */
+int test_compiler() {
+    // TODO
+    return -1;
+}
 
 /* */
 int OpticCore::dispatch_command(Command command, int argc, char **argv) {
@@ -14,20 +43,19 @@ int OpticCore::dispatch_command(Command command, int argc, char **argv) {
         return EXIT_SUCCESS;
     }
 
-    constexpr std::array<command_handler, static_cast<size_t>(Command::Count)> HANDLERS = {
-        nullptr,
-        test_,
-        install_,
-        uninstall_,
-        build_,
-        run_,
-        debug_
-    };
-
-    auto index = static_cast<size_t>(command);
-    
-    if (index < HANDLERS.size() && HANDLERS[index] != nullptr) {
-        return HANDLERS[index](argc, argv);
+    switch (command) {
+        case Command::Test:
+            break;
+        case Command::Install:
+            break;
+        case Command::Uninstall:
+            break;
+        case Command::Build:
+            return exec_compiler(argc, argv, CompilerMode::Build);
+        case Command::Run:
+            return exec_compiler(argc, argv, CompilerMode::Run);
+        case Command::Debug:
+            return exec_compiler(argc, argv, CompilerMode::Debug);
     }
 
     return EXIT_FAILURE;
@@ -35,14 +63,14 @@ int OpticCore::dispatch_command(Command command, int argc, char **argv) {
 
 OpticCore::Command OpticCore::get_command(const char *current_arg) {
     auto it = command_table.find(current_arg);
-    return (it != command_table.end()) ? it->second : Command::Count;
+    return (it != command_table.end()) ? it->second : Command::Unknown;
 }
 
 /* */
 int OpticCore::run(int argc, char *argv[]) {
     Command main_command = get_command(argv[0]);
 
-    if (main_command == Command::Count) {
+    if (main_command == Command::Unknown) {
         return EXIT_FAILURE;
     }
 

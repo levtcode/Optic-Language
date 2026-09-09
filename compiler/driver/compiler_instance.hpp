@@ -11,8 +11,15 @@
 
 using ArgValue = std::variant<int, bool, std::string>;
 
+enum class CompilerMode {
+    Build,  // Only builds the source file into binary code
+    Run,    // Build and executes in a runtime engine the source code
+    Debug   // Build and prints debugging messages to the stdout
+};
+
 /* */
 struct CompilerArgs {
+    CompilerMode mode;
     std::vector<std::string> files;
 
     std::unordered_map<std::string, ArgValue> options = {
@@ -46,7 +53,7 @@ private:
     std::vector<Module> modules;
 
 public:
-    [[nodiscard]] int run(int, char **) noexcept;
+    [[nodiscard]] int run(int argc, char **argv, CompilerMode) noexcept;
     [[noreturn]] void stop(bool=false) noexcept; 
 
     inline CompilerArgs &get_compiler_args() { return compiler_args; }

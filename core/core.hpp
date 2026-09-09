@@ -16,7 +16,7 @@ public:
         Build,
         Run,
         Debug,
-        Count
+        Unknown
     };
 
 private:

@@ -103,10 +103,11 @@ void CompilerInstance::lexing() noexcept {
 
 /* */
 [[nodiscard]]
-int CompilerInstance::run(int argc, char *argv[]) noexcept {
+int CompilerInstance::run(int argc, char *argv[], CompilerMode mode) noexcept {
+    (void) mode;
+
     get_args(argc, argv, *this);
     lexing();
-    preprocess();
 
     // More phases soon...
 
