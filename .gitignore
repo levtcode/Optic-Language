@@ -45,9 +45,6 @@
 *.dwo
 /.cache/
 
-# Testing & debugging
-/tests/
-
 # Visual Studio & VS Code task files
 /.vscode/
 

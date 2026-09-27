@@ -12,14 +12,14 @@
 using ArgValue = std::variant<int, bool, std::string>;
 
 enum class CompilerMode {
-    Build,  // Only builds the source file into binary code
-    Run,    // Build and executes in a runtime engine the source code
-    Debug   // Build and prints debugging messages to the stdout
+    Build,  // Builds the source code into binary format
+    Run,    // Builds and executes the source code in a runtime engine
+    Debug   // Builds and outputs debugging messages to stdout
 };
 
 /* */
 struct CompilerArgs {
-    CompilerMode mode;
+    CompilerMode mode = CompilerMode::Build;
     std::vector<std::string> files;
 
     std::unordered_map<std::string, ArgValue> options = {
@@ -48,14 +48,17 @@ private:
     // more methods soon
 
     CompilerArgs compiler_args;
-    DiagnosticsEngine diagnostic_engine;
+    DiagnosticsEngine diagnostics_engine;
 
     std::vector<Module> modules;
 
 public:
     [[nodiscard]] int run(int argc, char **argv, CompilerMode) noexcept;
-    [[noreturn]] void stop(bool=false) noexcept; 
+    [[noreturn]] void stop(bool core_dump=false) noexcept; 
 
-    inline CompilerArgs &get_compiler_args() { return compiler_args; }
-    inline DiagnosticsEngine &get_diagnostic_engine() { return diagnostic_engine; }
+    inline CompilerArgs get_compiler_args() { return compiler_args; }
+    inline DiagnosticsEngine get_diagnostics_engine() { return diagnostics_engine; }
+
+    inline void set_compiler_args(CompilerArgs &args) { compiler_args = args; }
+    inline void set_diagnostics_engine(DiagnosticsEngine &__diagnostics_engine) { diagnostics_engine = __diagnostics_engine; }
 };

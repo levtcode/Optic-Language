@@ -55,7 +55,7 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
 /* */
 [[noreturn]]
 void CompilerInstance::stop(bool generate_core_dump) noexcept {
-    diagnostic_engine.show_all();
+    diagnostics_engine.show_all();
     if (generate_core_dump)
         abort();
     else
@@ -79,7 +79,7 @@ void CompilerInstance::lexing() noexcept {
         std::string fname = compiler_args.files[i];
 
         if (!fname.ends_with(optic_extension)) {
-            diagnostic_engine.report(srcloc,
+            diagnostics_engine.report(srcloc,
                 std::format("Error: File '{}' is not a Optic file '{}', cant be processed.\n", fname, optic_extension),
                 "",
                 "",
@@ -89,9 +89,9 @@ void CompilerInstance::lexing() noexcept {
         }
 
         Module module(fname);
-        if (!get_data(fname, module.get_buffer(), diagnostic_engine)) continue;
+        if (!get_data(fname, module.get_buffer(), diagnostics_engine)) continue;
 
-        Lexer lexer(&module, &diagnostic_engine);
+        Lexer lexer(&module, &diagnostics_engine);
         lexer.tokenize(module.get_tokens());
 
     #ifdef OPTIC_DEBUG
@@ -111,6 +111,6 @@ int CompilerInstance::run(int argc, char *argv[], CompilerMode mode) noexcept {
 
     // More phases soon...
 
-    diagnostic_engine.get_config().guide_engine ? diagnostic_engine.run_guide_engine() : diagnostic_engine.show_all();
-    return (diagnostic_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
+    diagnostics_engine.get_config().guide_engine ? diagnostics_engine.run_guide_engine() : diagnostics_engine.show_all();
+    return (diagnostics_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
 }

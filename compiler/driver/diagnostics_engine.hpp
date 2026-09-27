@@ -84,6 +84,15 @@ private:
     void show_guide_engine_menu() noexcept;
 
 public:
+    DiagnosticsEngine operator=(DiagnosticsEngine &other) {
+        warnings_num  = other.warnings_num;
+        errors_num    = other.errors_num;
+        __actual_diag = other.__actual_diag;
+        __has_errors  = other.__has_errors;
+        config        = other.config;
+        diagnostics   = other.diagnostics;
+    }
+
     void report(const SourceLocation&, const std::string &msg, const std::string &sol, const std::string &info, const DiagnosticsLevel);
     void show() noexcept;
     void show_all() noexcept;

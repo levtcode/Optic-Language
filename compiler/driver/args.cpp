@@ -106,7 +106,7 @@ void process_arg(const std::string &arg, CompilerInstance &compiler_instance) {
 
     if (compiler_instance.get_compiler_args().options.contains(option_name)) {
         bool is_invalid = false;
-        ArgValue value = get_arg_value(arg, index, &is_invalid, compiler_instance.get_diagnostic_engine());
+        ArgValue value = get_arg_value(arg, index, &is_invalid, compiler_instance.get_diagnostics_engine());
 
         if (is_invalid) return;
 
@@ -129,7 +129,7 @@ void process_arg(const std::string &arg, CompilerInstance &compiler_instance) {
 /* get_args: reads arguments from the command line and try to parse them to the compiler args */
 void get_args(int argc, char *argv[], CompilerInstance &compiler_instance) {
     if (argc < 2) {
-        compiler_instance.get_diagnostic_engine().report(
+        compiler_instance.get_diagnostics_engine().report(
             loc,
             "Error: Not enough arguments provided in the command line\n",
             "Solution: Provide a least 2 arguments. For example:\n\t> optic ./file1.optic\n\n",
