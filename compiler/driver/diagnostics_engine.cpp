@@ -82,7 +82,7 @@ void DiagnosticsEngine::report(
 
     if (lvl != DiagnosticsLevel::Hint) {
         if (lvl == DiagnosticsLevel::Warning) warnings_num++;
-        else { errors_num++; __has_errors = true; }
+        else { errors_num++; }
     }
 }
 
