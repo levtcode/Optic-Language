@@ -18,8 +18,7 @@ enum class CompilerMode {
 };
 
 /* */
-class CompilerArgs {
-private:
+struct CompilerArgs {
     CompilerMode mode = CompilerMode::Build;
     std::vector<std::string> files;
 
@@ -33,19 +32,6 @@ private:
         {"-g", false},
         // more flags soon
     };
-
-    friend class CompilerInstance;
-
-public:
-    void set_mode  (const CompilerMode mode);
-    void add_file  (const std::string str);
-    void set_option(const std::string option_name, const ArgValue val);
-    void set_flag  (const std::string flag_name, const bool val);
-
-    bool                     get_flag_value(const std::string flag_name);
-    CompilerMode             get_compiler_mode();
-    ArgValue                 get_option_value(const std::string option_name);
-    std::vector<std::string> get_files();
 };
 
 /* */
@@ -56,10 +42,16 @@ struct TargetInfo {
 /* */
 class CompilerInstance {
 private:
-    void lexing()     noexcept;
-    void preprocess() noexcept;
-    void parsing()    noexcept;
-    // more methods soon
+    void cli_tooling(
+        int argc,
+        char **argv)        noexcept;
+    void lexing()           noexcept;
+    void preprocess()       noexcept;
+    void parsing()          noexcept;
+    void semantic_analize() noexcept;
+    void optimize()         noexcept;
+    void linking()          noexcept;
+    void code_generation()  noexcept;
 
     CompilerArgs        compiler_args;
     DiagnosticsEngine   diagnostics_engine;
@@ -67,5 +59,17 @@ private:
 
 public:
     [[nodiscard]] int run(int argc, char **argv, CompilerMode) noexcept;
-    [[noreturn]] void stop(bool core_dump=false) noexcept;
+    [[noreturn]]  void stop(bool core_dump=false) noexcept;
+
+    void call_usage(bool help_manual) noexcept;
+
+    void set_mode  (const CompilerMode mode);
+    void add_file  (const std::string file);
+    void set_option(const std::string option_name, const ArgValue val);
+    void set_flag  (const std::string flag_name, const bool val);
+
+    int                 get_flag_value(const std::string flag_name);
+    CompilerMode        get_compiler_mode();
+    ArgValue            get_option_value(const std::string option_name);
+    std::vector<Module> get_files();
 };

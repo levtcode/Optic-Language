@@ -52,6 +52,46 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
     return true;
 }
 
+void CompilerInstance::call_usage(bool help_manual) noexcept {
+    (void) help_manual;
+}
+
+inline void CompilerInstance::set_mode(const CompilerMode mode) {
+    compiler_args.mode = mode;
+}
+
+inline void CompilerInstance::add_file(const std::string file) {
+    modules.push_back(file);
+}
+
+void CompilerInstance::set_option(const std::string option_name, const ArgValue value) {
+    (void) option_name;
+    (void) value;
+}
+
+void CompilerInstance::set_flag(const std::string flag_name, const bool val) {
+    (void) flag_name;
+    (void) val;
+}
+
+int CompilerInstance::get_flag_value(const std::string flag_name) {
+    (void) flag_name;
+    return -1;
+}
+
+inline CompilerMode CompilerInstance::get_compiler_mode() {
+    return compiler_args.mode;
+}
+
+ArgValue CompilerInstance::get_option_value(const std::string option_name) {
+    (void) option_name;
+    return -1;
+}
+
+inline std::vector<Module> CompilerInstance::get_files() {
+    return modules;
+}
+
 /* */
 [[noreturn]]
 void CompilerInstance::stop(bool generate_core_dump) noexcept {
@@ -63,8 +103,9 @@ void CompilerInstance::stop(bool generate_core_dump) noexcept {
 }
 
 /* */
-void CompilerInstance::preprocess() noexcept {
-    // TODO
+void CompilerInstance::cli_tooling(int argc, char **argv) noexcept {
+    (void) argc;
+    (void) argv;
 }
 
 /* */
@@ -102,14 +143,48 @@ void CompilerInstance::lexing() noexcept {
 }
 
 /* */
+void CompilerInstance::preprocess() noexcept {
+    // TODO
+}
+
+/* */
+void CompilerInstance::parsing() noexcept {
+    // TODO
+}
+
+/* */
+void CompilerInstance::semantic_analize() noexcept {
+    // TODO
+}
+
+/* */
+void CompilerInstance::optimize() noexcept {
+    // TODO
+}
+
+/* */
+void CompilerInstance::linking() noexcept {
+    // TODO
+}
+
+/* */
+void CompilerInstance::code_generation() noexcept {
+    // TODO
+}
+
+/* */
 [[nodiscard]]
 int CompilerInstance::run(int argc, char *argv[], CompilerMode mode) noexcept {
-    (void) mode;
+    set_mode(mode);
 
-    get_args(argc, argv, *this);
+    cli_tooling(argc, argv);
     lexing();
-
-    // More phases soon...
+    preprocess();
+    parsing();
+    semantic_analize();
+    optimize();
+    linking();
+    code_generation();
 
     diagnostics_engine.get_config().guide_engine ? diagnostics_engine.run_guide_engine() : diagnostics_engine.show_all();
     return (diagnostics_engine.has_errors()) ? EXIT_FAILURE : EXIT_SUCCESS;
