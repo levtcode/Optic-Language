@@ -77,12 +77,12 @@ Optic is currently in the **pre-alpha** stage.
 
 ### Implemented
 
-- Lexer
+- Core
 - Driver
+- Lexer
 
 ### In Progress
 
-- Core
 - Preprocessor
 - Parser
 - Semantic analysis

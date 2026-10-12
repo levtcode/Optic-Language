@@ -14,10 +14,10 @@ constexpr const char *optic_extension = ".optic";
 /* */
 class Module {
 private:
-    std::string name;
-    std::string path;
-    std::string buffer;
-    SourceLocation mod_loc;
+    std::string          name;
+    std::string          path;
+    std::string          buffer;
+    SourceLocation       mod_loc;
     std::vector<token_t> tokens;
 
     void name_module_format() noexcept {
@@ -36,8 +36,8 @@ public:
     inline std::string get_name() const noexcept { return name; }
     inline std::string get_path() const noexcept { return path; }
 
-    inline std::string &get_buffer() noexcept { return buffer; }
-    inline SourceLocation &loc() noexcept { return mod_loc; }
-    inline std::vector<token_t> &get_tokens() noexcept { return tokens; }
+    inline std::string          &get_buffer() noexcept { return buffer;  }
+    inline SourceLocation       &loc()        noexcept { return mod_loc; }
+    inline std::vector<token_t> &get_tokens() noexcept { return tokens;  }
     // more methods here...
 };

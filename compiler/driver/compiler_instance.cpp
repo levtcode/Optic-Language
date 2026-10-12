@@ -1,8 +1,8 @@
 /* compiler_instance.cpp */
 
 #include "compiler_instance.hpp"
-#include "args.hpp"
 #include "diagnostics_engine.hpp"
+#include "args.hpp"
 #include "preprocessor/preprocessor.hpp"
 #include "lexer/lexer.hpp"
 
@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <format>
+#include <algorithm>
 
 /* */
 bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &diagnostic_engine) noexcept {
@@ -40,7 +41,7 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
         diagnostic_engine.report(
             srcloc,
             std::format("Error: Failed to read file '{}', IO error.\n", fname),
-            "Solution: Verify if your file contains a valid format (UTF-8 for example...) and is not a binary file.\n",
+            "Solution: Verify if your file contains a valid encode format (UTF-8 for example) and is not a binary file.\n",
             "More information: ...",
             DiagnosticsLevel::Error
         );
@@ -53,15 +54,38 @@ bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &dia
 }
 
 void CompilerInstance::call_usage(bool help_manual) noexcept {
-    (void) help_manual;
+    printf(
+        "Usage:\n" \
+        "Main arguments\n"
+        "\thelp\t\tShow a help user manual.\n" \
+        "\ttest\t\tRun a dedicated module to test the optic's compiler.\n" \
+        "\tinstall\t\tInstall an optic package.\n" \
+        "\tuninstall\tUninstall an optic package.\n" \
+        "\tbuild\t\tCompile and build an executable binary file.\n" \
+        "\trun\t\tCompile and run on the runtime engine the optic's source code file.\n"
+        "\tdebug\t\tCompile and build the optic's source code file showing the compiler's objects.\n\n" \
+
+        "Compiler flags\n" \
+        "...\n\n"
+        // TODO
+    );
+
+    if (help_manual) {
+        // TODO
+    }
 }
+
+
+// %==========% Compiler Interface %==========%
 
 inline void CompilerInstance::set_mode(const CompilerMode mode) {
     compiler_args.mode = mode;
 }
 
 inline void CompilerInstance::add_file(const std::string file) {
-    modules.push_back(file);
+    if (std::find(compiler_args.files.begin(), compiler_args.files.end(), file) == compiler_args.files.end()) {
+        compiler_args.files.push_back(file);
+    }
 }
 
 void CompilerInstance::set_option(const std::string option_name, const ArgValue value) {
@@ -92,20 +116,79 @@ inline std::vector<Module> CompilerInstance::get_files() {
     return modules;
 }
 
-/* */
-[[noreturn]]
-void CompilerInstance::stop(bool generate_core_dump) noexcept {
-    diagnostics_engine.show_all();
-    if (generate_core_dump)
-        abort();
-    else
-        exit(1);
-}
+
+// %==========% Compiler Phases %==========%
 
 /* */
 void CompilerInstance::cli_tooling(int argc, char **argv) noexcept {
-    (void) argc;
-    (void) argv;
+    // TODO: Print args if debug mode, refactor std::visit lambda to allow local use and improve report messages.
+
+    SourceLocation srcloc(SourceKind::Stdin, "", "", 0, 0);
+    std::string tmp[2] = {""};
+
+    for (int i = 0; i < argc; i++) {
+        size_t index;
+        int match = cli_tooling::match_compiler_arg(argv[i], &index);
+
+        if (match == -1) {
+            add_file(argv[i]);
+        }
+
+        else if (match == 1) {
+            ArgValue val = cli_tooling::parse_value(argv[i], &index);
+
+            if (index == std::string::npos) {
+                diagnostics_engine.report(
+                    srcloc,
+                    std::format("Error: Couldnt parse option value, value type is empty or not supported.\n"),
+                    "",
+                    "More information: The compiler cli tooling expects a valid value type. Valid value types are: int, double, bool, string.\n",
+                    DiagnosticsLevel::Error
+                );
+                stop();
+            }
+
+            std::string option_name = std::string(argv[i]).substr(0, index);
+
+            if (!compiler_args.options.contains(option_name)) {
+                tmp[0] = "option"; tmp[1] = option_name;
+                break;
+            }
+
+            if (!cli_tooling::same_arg_type(compiler_args.options[option_name], val)) {
+                diagnostics_engine.report(
+                    srcloc,
+                    std::format("Error: Option value type dont match compiler type. There is a types conflict.\n"),
+                    "",
+                    "",
+                    DiagnosticsLevel::Error
+                );
+                stop();
+            }
+        }
+
+        else {
+            std::string flag_name = std::string(argv[i]).substr(0, index);
+            
+            if (!compiler_args.flags.contains(flag_name)) {
+                tmp[0] = "flag"; tmp[1] = flag_name;
+                break;
+            }
+
+            compiler_args.flags[flag_name] = !compiler_args.flags[flag_name];
+        }
+    }
+
+    if (!tmp[0].empty()) {
+        diagnostics_engine.report(srcloc,
+            std::format("Error: {} name '{}' does not exists. Couldnt apply any changes. See a list of supported {}s.\n", tmp[0], tmp[1], tmp[0]),
+            "",
+            "",
+            DiagnosticsLevel::Error
+        );
+        call_usage();
+        stop();
+    }
 }
 
 /* */
@@ -172,12 +255,23 @@ void CompilerInstance::code_generation() noexcept {
     // TODO
 }
 
+
+/* */
+[[noreturn]]
+void CompilerInstance::stop(bool generate_core_dump) noexcept {
+    diagnostics_engine.show_all();
+    if (generate_core_dump)
+        abort();
+    else
+        exit(1);
+}
+
 /* */
 [[nodiscard]]
 int CompilerInstance::run(int argc, char *argv[], CompilerMode mode) noexcept {
     set_mode(mode);
 
-    cli_tooling(argc, argv);
+    cli_tooling(--argc, ++argv);
     lexing();
     preprocess();
     parsing();

@@ -9,7 +9,9 @@
 #include <unordered_map>
 #include <variant>
 
-using ArgValue = std::variant<int, bool, std::string>;
+using ArgValue = std::variant<bool, int, double, std::string>;
+
+bool get_data(const std::string fname, std::string &dest, DiagnosticsEngine &diagnostic_engine) noexcept;
 
 enum class CompilerMode {
     Build,  // Builds the source code into binary format
@@ -23,13 +25,13 @@ struct CompilerArgs {
     std::vector<std::string> files;
 
     std::unordered_map<std::string, ArgValue> options = {
-        {"--color_diagnostics", "auto"},    // [auto, enable, disable] default=auto
+        {"--color-diagnostics", "auto"},    // [auto, enable, disable] default=auto
         // more options soon
     };
 
     std::unordered_map<std::string, bool> flags = {
         {"-Wall", false},
-        {"-g", false},
+        {"-g",    false},
         // more flags soon
     };
 };
@@ -61,7 +63,7 @@ public:
     [[nodiscard]] int run(int argc, char **argv, CompilerMode) noexcept;
     [[noreturn]]  void stop(bool core_dump=false) noexcept;
 
-    void call_usage(bool help_manual) noexcept;
+    static void call_usage(bool help_manual=false) noexcept;
 
     void set_mode  (const CompilerMode mode);
     void add_file  (const std::string file);

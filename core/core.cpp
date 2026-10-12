@@ -2,7 +2,6 @@
 
 #include "core.hpp"
 #include "../compiler/driver/compiler_instance.hpp"
-#include "../compiler/driver/args.hpp"
 
 #include <cstdlib>
 
@@ -39,7 +38,7 @@ int test_compiler() {
 /* */
 int OpticCore::dispatch_command(Command command, int argc, char **argv) {
     if (command == Command::Help) {
-        call_usage();
+        CompilerInstance::call_usage(true);
         return EXIT_SUCCESS;
     }
 
@@ -71,6 +70,11 @@ int OpticCore::run(int argc, char *argv[]) {
     Command main_command = get_command(argv[0]);
 
     if (main_command == Command::Unknown) {
+        printf(
+            "Bad usage. Argument '%s' is not a main argument.\n" \
+            "See a list of all main optic's main arguments.\n\n"
+        , argv[0]);
+        CompilerInstance::call_usage();
         return EXIT_FAILURE;
     }
 
