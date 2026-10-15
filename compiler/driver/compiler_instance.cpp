@@ -189,6 +189,10 @@ void CompilerInstance::cli_tooling(int argc, char **argv) noexcept {
         call_usage();
         stop();
     }
+
+    if (compiler_args.mode == CompilerMode::Debug) {
+        cli_tooling::print_args(compiler_args);
+    }
 }
 
 /* */

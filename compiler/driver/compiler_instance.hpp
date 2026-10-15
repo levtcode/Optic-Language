@@ -20,18 +20,31 @@ enum class CompilerMode {
 };
 
 /* */
+enum class CompilerFlag {
+    AllWarnings,
+    DebugSymbols,
+};
+
+/* */
+struct FlagInfo {
+    CompilerFlag id;
+    std::string_view short_name;
+    std::string_view long_name;
+};
+
+/* */
 struct CompilerArgs {
     CompilerMode mode = CompilerMode::Build;
     std::vector<std::string> files;
 
     std::unordered_map<std::string, ArgValue> options = {
-        {"--color-diagnostics", "auto"},    // [auto, enable, disable] default=auto
+        { "--color-diagnostics", "auto" },    // [auto, enable, disable] default=auto
         // more options soon
     };
 
     std::unordered_map<std::string, bool> flags = {
-        {"-Wall", false},
-        {"-g",    false},
+        { "-Wall", false },
+        { "-g",    false },
         // more flags soon
     };
 };

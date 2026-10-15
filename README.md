@@ -106,7 +106,7 @@ flowchart TD
 
     A["optic.cpp<br/>(Entry Point)"]
 
-    B["Core<br/>Command Manager"]
+    B["Optic Core"]
 
     C["CLI Arguments"]
 
